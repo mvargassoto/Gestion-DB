@@ -5,17 +5,6 @@ GO
 --    Creacion de schema
 --============================================================================================================================
 
-IF EXISTS (SELECT * FROM sys.schemas WHERE name = 'EXEL_ENTES')
-BEGIN
-    DROP SCHEMA EXEL_ENTES;
-    PRINT 'Esquema eliminado correctamente.';
-END
-ELSE
-BEGIN
-    PRINT 'El esquema no existe.';
-END
-
-
 IF NOT EXISTS (SELECT schema_id FROM sys.schemas WHERE name = 'EXEL_ENTES')
 BEGIN
 	EXEC('CREATE SCHEMA EXEL_ENTES;');
@@ -83,20 +72,20 @@ DROP TABLE [EXEL_ENTES].[Detalle_Venta]
 
 -- creamos las tablas ------------------------------------------------------------------------------------------------------
 
-SELECT * 
-FROM information_schema.tables 
+SELECT *
+FROM information_schema.tables
 WHERE table_schema = 'EXEL_ENTES';
 
 SELECT * FROM sys.schemas WHERE name = 'EXEL_ENTES';
 
 
-SELECT 
+SELECT
     COLUMN_NAME,
     DATA_TYPE,
     IS_NULLABLE
-FROM 
+FROM
     information_schema.columns
-WHERE 
+WHERE
     table_schema = 'EXEL_ENTES' AND
     table_name = 'Usuario';
 
@@ -126,7 +115,8 @@ CREATE TABLE [EXEL_ENTES].[Vendedor] (
 	CONSTRAINT [PK_Vendedor] PRIMARY KEY (Codigo_Vendedor),
     Codigo_Usuario NVARCHAR(50),
     Razon_Social NVARCHAR(50),
-    CUIT NVARCHAR(50)
+    CUIT NVARCHAR(50),
+	Mail NVARCHAR(50)
 );
 
 CREATE TABLE [EXEL_ENTES].[Producto] (
@@ -198,14 +188,27 @@ CREATE TABLE [EXEL_ENTES].[MedioDePago] (
 	CONSTRAINT [FK_MedioDePago_Codigo_Tipo_Medio_De_Pago] FOREIGN KEY (Tipo_Medio_Pago_Codigo) REFERENCES [EXEL_ENTES].[TipoMedioDePago](Tipo_Medio_Pago_Codigo)
 );
 
+CREATE TABLE [EXEL_ENTES].[Pago] (
+    Numero_Pago INT IDENTITY(1,1) NOT NULL,
+	CONSTRAINT [PK_Pago] PRIMARY KEY (Numero_Pago),
+    CONSTRAINT [FK_Pago_Numero_Venta] FOREIGN KEY (Codigo_Numero_Venta) REFERENCES [EXEL_ENTES].[Venta](Numero_Venta),
+    CONSTRAINT [FK_Pago_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente), ---
+    CONSTRAINT [FK_Pago_Codigo_MedioPago] FOREIGN KEY (Codigo_MedioPago) REFERENCES [EXEL_ENTES].[MedioDePago](Codigo_MedioPago),    
+	Codigo_Numero_Venta DECIMAL(18, 0) NOT NULL,
+    Codigo_Cliente INT NOT NULL, ---------
+	Codigo_MedioPago INT NOT NULL,
+    Importe DECIMAL(18, 2) NOT NULL,
+    Fecha DATE NULL
+);
+
 CREATE TABLE [EXEL_ENTES].[Detalle_Pago] (
-    CONSTRAINT [FK_Nro_Pago] FOREIGN KEY (Nro_Pago) REFERENCES [EXEL_ENTES].[Pago](Nro_Pago),
+    CONSTRAINT [FK_Nro_Pago] FOREIGN KEY (Nro_Pago) REFERENCES [EXEL_ENTES].[Pago](Numero_Pago),
     CONSTRAINT [FK_Medio_Pago] FOREIGN KEY (Medio_Pago) REFERENCES [EXEL_ENTES].[MedioDePago](Codigo_MedioPago),
-    Nro_Pago DECIMAL(18, 0) NOT NULL,
-    Medio_Pago DECIMAL(18, 0) NOT NULL,
+    Nro_Pago INT NOT NULL,
+    Medio_Pago INT NOT NULL,
     CONSTRAINT [FK_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente), 
     Fecha_Vencimiento_Tarjeta DATE NULL,
-	Codigo_Cliente DECIMAL(18, 0) NOT NULL,
+	Codigo_Cliente INT NOT NULL,
     Cuotas DECIMAL(18, 2) NULL,
     Nro_Tarjeta DECIMAL(16, 0) NULL
 );
@@ -220,19 +223,6 @@ CREATE TABLE [EXEL_ENTES].[Detalle_Venta] (
 	Subtotal DECIMAL(18,2) NOT NULL
 );
 
-CREATE TABLE [EXEL_ENTES].[Pago] (
-    Numero_Pago INT IDENTITY(1,1) NOT NULL,
-	CONSTRAINT [PK_Pago] PRIMARY KEY (Numero_Pago),
-    CONSTRAINT [FK_Pago_Numero_Venta] FOREIGN KEY (Codigo_Numero_Venta) REFERENCES [EXEL_ENTES].[Venta](Numero_Venta),
-    CONSTRAINT [FK_Pago_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente), ---
-    CONSTRAINT [FK_Pago_Codigo_MedioPago] FOREIGN KEY (Codigo_MedioPago) REFERENCES [EXEL_ENTES].[MedioDePago](Codigo_MedioPago),    
-	Codigo_Numero_Venta DECIMAL(18, 0) NOT NULL,
-    Codigo_Cliente INT IDENTITY(1,1) NOT NULL, ---------
-	Codigo_MedioPago DECIMAL(18, 0) NOT NULL,
-    Importe DECIMAL(18, 2) NOT NULL,
-    Fecha DATE NULL
-);
-
 
 CREATE TABLE [EXEL_ENTES].[TipoEnvio] (
     Codigo_TipoEnvio INT IDENTITY (1,1) NOT NULL,
@@ -244,21 +234,28 @@ CREATE TABLE [EXEL_ENTES].[Envio] (
     Nro_Envio DECIMAL(18, 0) NOT NULL,
 	CONSTRAINT [PK_Envio] PRIMARY KEY (Nro_Envio),
     CONSTRAINT [FK_Envio_Nro_Venta] FOREIGN KEY (Nro_Venta) REFERENCES [EXEL_ENTES].[Venta](Numero_Venta),
-    CONSTRAINT [FK_Envio_Tipo_Envio] FOREIGN KEY (TipoEnvio) REFERENCES [EXEL_ENTES].[TipoEnvio](Codigo_TipoEnvio),
+    CONSTRAINT [FK_Envio_Tipo_Envio] FOREIGN KEY (Tipo_Envio) REFERENCES [EXEL_ENTES].[TipoEnvio](Codigo_TipoEnvio),
     Nro_Venta DECIMAL(18, 0) NOT NULL,
     Fecha_Programada DATE NULL,
 	Hora_inicio DECIMAL(18, 0) NOT NULL,
 	Hora_fin_inicio DECIMAL(18, 0) NOT NULL,
     Fecha_Entrega DATETIME NULL,
     Costo_Envio DECIMAL(18, 2) NULL,
-    Tipo_Envio  INT IDENTITY (1,1) NOT NULL
+    Tipo_Envio  INT NOT NULL
 );
 
+select distinct PRODUCTO_MARCA from gd_esquema.Maestra
 
 CREATE TABLE [EXEL_ENTES].[Marca] (
-    Codigo_Marca DECIMAL(18, 0) NOT NULL,
+    Codigo_Marca NVARCHAR(50) NOT NULL,
 	CONSTRAINT [PK_Marca] PRIMARY KEY (Codigo_Marca),
-    Descripcion NVARCHAR(255) NULL
+    Descripcion NVARCHAR(50) NULL
+);
+
+CREATE TABLE [EXEL_ENTES].[Subrubro] (
+    Codigo_Subrubro NVARCHAR(50) NOT NULL,
+	CONSTRAINT [PK_Subrubro] PRIMARY KEY (Codigo_Subrubro),
+    Descripcion NVARCHAR(255) NULL,
 );
 
 CREATE TABLE [EXEL_ENTES].[Rubro] (
@@ -269,14 +266,8 @@ CREATE TABLE [EXEL_ENTES].[Rubro] (
 	Codigo_Subrubro NVARCHAR(50) NOT NULL
 );
 
-CREATE TABLE [EXEL_ENTES].[Subrubro] (
-    Codigo_Subrubro NVARCHAR(50) NOT NULL,
-	CONSTRAINT [PK_Subrubro] PRIMARY KEY (Codigo_Subrubro),
-    Descripcion NVARCHAR(255) NULL,
-);
-
 CREATE TABLE [EXEL_ENTES].[Provincia] (
-    Codigo_Provincia DECIMAL(18, 0) NOT NULL,
+    Codigo_Provincia INT IDENTITY (1,1) NOT NULL,
 	CONSTRAINT [PK_Provincia] PRIMARY KEY (Codigo_Provincia),
     Nombre NVARCHAR(255) NULL
 );
@@ -286,7 +277,7 @@ CREATE TABLE [EXEL_ENTES].[Localidad] (
 	CONSTRAINT [PK_Localidad] PRIMARY KEY (Codigo_Localidad),
     CONSTRAINT [FK_Localidad_Provincia] FOREIGN KEY (Codigo_Provincia) REFERENCES [EXEL_ENTES].[Provincia](Codigo_Provincia),
     Descripcion NVARCHAR(255) NULL,
-    Codigo_Provincia  INT IDENTITY (1,1) NOT NULL
+    Codigo_Provincia  INT NOT NULL
 );
 
 CREATE TABLE [EXEL_ENTES].[Detalle_Factura] (
@@ -300,7 +291,7 @@ CREATE TABLE [EXEL_ENTES].[Detalle_Factura] (
 );
 
 CREATE TABLE [EXEL_ENTES].[Modelo] (
-    Codigo_Modelo NVARCHAR(50) NOT NULL,
+    Codigo_Modelo INT IDENTITY(1,1)  NOT NULL,
 	CONSTRAINT [PK_Modelo] PRIMARY KEY (Codigo_Modelo),
     Descripcion NVARCHAR(255) NULL
 );
@@ -318,7 +309,7 @@ CREATE TABLE [EXEL_ENTES].[Modelo] (
 --============================================================================================================================
 
 -- creamos los procedures ----------------------------------------------------------------------------------------------------
-
+/*
 IF EXISTS (SELECT [name] FROM sys.procedures WHERE [name] = 'migrar_cliente')
     DROP PROCEDURE [EXEL_ENTES].migrar_cliente;
 GO
@@ -329,10 +320,10 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Cliente] (Codigo_Cliente, Codigo_Usuario)
     SELECT DISTINCT Codigo_Cliente, Codigo_Usuario
     FROM gd_esquema.Maestra
-    WHERE Codigo_Cliente IS NOT NULL  
+    WHERE Codigo_Cliente IS NOT NULL
     ORDER BY Codigo_Cliente ASC;
 END
-GO
+GO*/
 ------------------------------------------------------------------------------------------------------------------------------
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_vendedor')
@@ -342,13 +333,14 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_vendedor
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Vendedor] (Codigo_Vendedor, Codigo_Usuario, Razon_Social, CUIT)
-    SELECT DISTINCT VENDEDOR_CODIGO, VENDEDOR_USUARIO, VENDEDOR_RAZON_SOCIAL, VENDEDOR_CUIT
+    INSERT INTO [EXEL_ENTES].[Vendedor] (Mail, Razon_Social, CUIT)
+    SELECT DISTINCT VENDEDOR_MAIL,VENDEDOR_RAZON_SOCIAL, VENDEDOR_CUIT
     FROM gd_esquema.Maestra
-    WHERE VENDEDOR_CODIGO IS NOT NULL  
-    ORDER BY VENDEDOR_CODIGO ASC;
 END
 GO
+
+SELECT * FROM EXEL_ENTES.Vendedor
+EXECUTE [EXEL_ENTES].migrar_vendedor;
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -362,13 +354,13 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Producto] (Codigo_Producto, Rubro, Codigo_Marca, Descripcion, Modelo)
     SELECT DISTINCT PRODUCTO_CODIGO, PRODUCTO_SUB_RUBRO, PRODUCTO_MARCA, PRODUCTO_DESCRIPCION, PRODUCTO_MOD_CODIGO
     FROM gd_esquema.Maestra
-    WHERE PRODUCTO_CODIGO IS NOT NULL 
+    WHERE PRODUCTO_CODIGO IS NOT NULL
     ORDER BY PRODUCTO_CODIGO ASC;
     
     INSERT INTO [EXEL_ENTES].[Modelo] (Codigo_Modelo, Descripcion)
     SELECT DISTINCT PRODUCTO_MOD_CODIGO, PRODUCTO_MOD_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE PRODUCTO_MOD_CODIGO IS NOT NULL  
+    WHERE PRODUCTO_MOD_CODIGO IS NOT NULL
     ORDER BY PRODUCTO_MOD_CODIGO ASC;
 END
 GO
@@ -382,10 +374,10 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_publicacion
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Codigo_Producto, Codigo_Vendedor, Fecha_Inicio, Fecha_Fin, Stock, Precio)
-    SELECT DISTINCT PUBLICACION_CODIGO, PRODUCTO_CODIGO, VENDEDOR_CODIGO, PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
+    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Codigo_Producto, Fecha_Inicio, Fecha_Fin, Stock, Precio)
+    SELECT DISTINCT PUBLICACION_CODIGO, PRODUCTO_CODIGO, PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
     FROM gd_esquema.Maestra
-    WHERE PUBLICACION_CODIGO IS NOT NULL  
+    WHERE PUBLICACION_CODIGO IS NOT NULL
     ORDER BY PUBLICACION_CODIGO ASC;
 END
 GO
@@ -399,10 +391,10 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_venta
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Venta] (Numero_Venta, Codigo_Cliente, Codigo_Publicacion, Fecha_Venta, Total)
-    SELECT DISTINCT VENTA_CODIGO, CLIENTE_CODIGO, PUBLICACION_CODIGO, VENTA_FECHA, VENTA_TOTAL
+    INSERT INTO [EXEL_ENTES].[Venta] (Numero_Venta, Codigo_Publicacion, Fecha_Venta, Total)
+    SELECT DISTINCT VENTA_CODIGO, PUBLICACION_CODIGO, VENTA_FECHA, VENTA_TOTAL
     FROM gd_esquema.Maestra
-    WHERE VENTA_CODIGO IS NOT NULL  
+    WHERE VENTA_CODIGO IS NOT NULL
     ORDER BY VENTA_CODIGO ASC;
 END
 GO
@@ -416,10 +408,10 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_factura
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Factura] (Nro_Factura, Codigo_Vendedor, Codigo_Cliente, Fecha_Factura, Total)
-    SELECT DISTINCT FACTURA_NUMERO, VENDEDOR_CODIGO, CLIENTE_CODIGO, FACTURA_FECHA, FACTURA_TOTAL
+    INSERT INTO [EXEL_ENTES].[Factura] (Numero_Factura, Fecha_Factura, Total)
+    SELECT DISTINCT FACTURA_NUMERO, FACTURA_FECHA, FACTURA_TOTAL
     FROM gd_esquema.Maestra
-    WHERE FACTURA_NUMERO IS NOT NULL  
+    WHERE FACTURA_NUMERO IS NOT NULL
     ORDER BY FACTURA_NUMERO ASC;
     
     INSERT INTO [EXEL_ENTES].[Detalle_Factura] (Nro_Factura, Codigo_Publicacion, Cantidad, Precio)
@@ -438,17 +430,13 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_pago
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Pago] (Nro_Pago, Nro_Venta, Codigo_Cliente, Medio_Pago, Importe, Fecha)
-    SELECT DISTINCT PAGO_CODIGO, VENTA_CODIGO, CLIENTE_CODIGO, PAGO_MEDIO_PAGO, PAGO_IMPORTE, PAGO_FECHA
+    INSERT INTO [EXEL_ENTES].[Pago] (Codigo_Numero_Venta, Codigo_MedioPago, Importe, Fecha)
+    SELECT DISTINCT VENTA_CODIGO, PAGO_MEDIO_PAGO, PAGO_IMPORTE, PAGO_FECHA
     FROM gd_esquema.Maestra
-    WHERE PAGO_CODIGO IS NOT NULL  
-    ORDER BY PAGO_CODIGO ASC;
     
-    INSERT INTO [EXEL_ENTES].[Detalle_Pago] (Nro_Pago, Medio_Pago, Codigo_Cliente, Fecha_Vencimiento, Costo, Nro_Tarjeta)
-    SELECT DISTINCT PAGO_CODIGO, PAGO_MEDIO_PAGO, CLIENTE_CODIGO, PAGO_FECHA_VENC_TARJETA, PAGO_IMPORTE, PAGO_NRO_TARJETA
+    INSERT INTO [EXEL_ENTES].[Detalle_Pago] (Medio_Pago, Fecha_Vencimiento_Tarjeta, Nro_Tarjeta)
+    SELECT DISTINCT PAGO_MEDIO_PAGO, PAGO_FECHA_VENC_TARJETA, PAGO_NRO_TARJETA
     FROM gd_esquema.Maestra
-    WHERE PAGO_CODIGO IS NOT NULL AND PAGO_NRO_TARJETA IS NOT NULL
-    ORDER BY PAGO_CODIGO ASC;
 END
 GO
 
@@ -464,7 +452,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Almacen] (Codigo_Almacen, Calle, Numero, Costo, Localidad)
     SELECT DISTINCT ALMACEN_CODIGO, ALMACEN_CALLE, ALMACEN_NRO_CALLE, ALMACEN_COSTO_DIA_AL, ALMACEN_LOCALIDAD
     FROM gd_esquema.Maestra
-    WHERE ALMACEN_CODIGO IS NOT NULL  
+    WHERE ALMACEN_CODIGO IS NOT NULL
     ORDER BY ALMACEN_CODIGO ASC;
 END
 GO
@@ -481,7 +469,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Envio] (Nro_Envio, Nro_Venta, Fecha_Programada, Fecha_Entrega, Costo_Envio, Tipo_Envio)
     SELECT DISTINCT ENVIO_CODIGO, VENTA_CODIGO, ENVIO_FECHA_PROGAMADA, ENVIO_FECHA_ENTREGA, ENVIO_COSTO, ENVIO_TIPO
     FROM gd_esquema.Maestra
-    WHERE ENVIO_CODIGO IS NOT NULL  
+    WHERE ENVIO_CODIGO IS NOT NULL
     ORDER BY ENVIO_CODIGO ASC;
 END
 GO
@@ -498,7 +486,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[MedioDePago] (Codigo_MedioPago, Descripcion)
     SELECT DISTINCT PAGO_MEDIO_PAGO, PAGO_TIPO_MEDIO_PAGO
     FROM gd_esquema.Maestra
-    WHERE PAGO_MEDIO_PAGO IS NOT NULL 
+    WHERE PAGO_MEDIO_PAGO IS NOT NULL
     ORDER BY PAGO_MEDIO_PAGO ASC;
 END
 GO
@@ -515,7 +503,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[TipoEnvio] (Codigo_TipoEnvio, Descripcion)
     SELECT DISTINCT ENVIO_TIPO, ENVIO_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE ENVIO_TIPO IS NOT NULL  
+    WHERE ENVIO_TIPO IS NOT NULL
     ORDER BY ENVIO_TIPO ASC;
 END
 GO
@@ -532,7 +520,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Marca] (Codigo_Marca, Descripcion)
     SELECT DISTINCT PRODUCTO_MARCA, PRODUCTO_MARCA_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE PRODUCTO_MARCA IS NOT NULL 
+    WHERE PRODUCTO_MARCA IS NOT NULL
     ORDER BY PRODUCTO_MARCA ASC;
 END
 GO
@@ -549,7 +537,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Rubro] (Codigo_Rubro, Descripcion)
     SELECT DISTINCT PRODUCTO_SUB_RUBRO, PRODUCTO_RUBRO_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE PRODUCTO_SUB_RUBRO IS NOT NULL  
+    WHERE PRODUCTO_SUB_RUBRO IS NOT NULL
     ORDER BY PRODUCTO_SUB_RUBRO ASC;
 END
 GO
@@ -566,7 +554,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Localidad] (Codigo_Localidad, Descripcion, Codigo_Provincia)
     SELECT DISTINCT CLI_USUARIO_DOMICILIO_LOCALIDAD, CLI_USUARIO_DOMICILIO_LOCALIDAD, CLI_USUARIO_DOMICILIO_PROVINCIA
     FROM gd_esquema.Maestra
-    WHERE CLI_USUARIO_DOMICILIO_LOCALIDAD IS NOT NULL 
+    WHERE CLI_USUARIO_DOMICILIO_LOCALIDAD IS NOT NULL
     ORDER BY CLI_USUARIO_DOMICILIO_LOCALIDAD ASC;
 END
 GO
