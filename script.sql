@@ -423,34 +423,34 @@ END
 GO
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago') ----- Sofi
     DROP PROCEDURE [EXEL_ENTES].migrar_pago;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_pago
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Pago] (Codigo_Numero_Venta, Codigo_MedioPago, Importe, Fecha)
-    SELECT DISTINCT VENTA_CODIGO, PAGO_MEDIO_PAGO, PAGO_IMPORTE, PAGO_FECHA
+    INSERT INTO [EXEL_ENTES].[Pago] (Codigo_Numero_Venta, Importe, Fecha)
+    SELECT DISTINCT VENTA_CODIGO, PAGO_IMPORTE, PAGO_FECHA
     FROM gd_esquema.Maestra
     
-    INSERT INTO [EXEL_ENTES].[Detalle_Pago] (Medio_Pago, Fecha_Vencimiento_Tarjeta, Nro_Tarjeta)
-    SELECT DISTINCT PAGO_MEDIO_PAGO, PAGO_FECHA_VENC_TARJETA, PAGO_NRO_TARJETA
+    INSERT INTO [EXEL_ENTES].[Detalle_Pago] (Fecha_Vencimiento_Tarjeta, Cuotas, Nro_Tarjeta)
+    SELECT DISTINCT PAGO_FECHA_VENC_TARJETA, PAGO_CANT_CUOTAS, PAGO_NRO_TARJETA
     FROM gd_esquema.Maestra
 END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen') -------- Sofi
     DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_almacen
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Almacen] (Codigo_Almacen, Calle, Numero, Costo, Localidad)
-    SELECT DISTINCT ALMACEN_CODIGO, ALMACEN_CALLE, ALMACEN_NRO_CALLE, ALMACEN_COSTO_DIA_AL, ALMACEN_LOCALIDAD
+    INSERT INTO [EXEL_ENTES].[Almacen] (Codigo_Almacen, Calle, Numero, Costo, Localidad, Provincia)
+    SELECT DISTINCT ALMACEN_CODIGO, ALMACEN_CALLE, ALMACEN_NRO_CALLE, ALMACEN_COSTO_DIA_AL, ALMACEN_Localidad, ALMACEN_PROVINCIA
     FROM gd_esquema.Maestra
     WHERE ALMACEN_CODIGO IS NOT NULL
     ORDER BY ALMACEN_CODIGO ASC;
@@ -459,15 +459,15 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') ----- Sofi
     DROP PROCEDURE [EXEL_ENTES].migrar_envio;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_envio
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Envio] (Nro_Envio, Nro_Venta, Fecha_Programada, Fecha_Entrega, Costo_Envio, Tipo_Envio)
-    SELECT DISTINCT ENVIO_CODIGO, VENTA_CODIGO, ENVIO_FECHA_PROGAMADA, ENVIO_FECHA_ENTREGA, ENVIO_COSTO, ENVIO_TIPO
+    INSERT INTO [EXEL_ENTES].[Envio] (Nro_Envio, Nro_Venta, Fecha_Programada, Hora_inicio, Hora_fin_inicio, Fecha_Entrega, Costo_Envio, Tipo_Envio)
+    SELECT DISTINCT ENVIO_CODIGO, VENTA_CODIGO, ENVIO_FECHA_PROGAMADA, ENVIO_HORA_INICIO, ENVIO_HORA_FIN_INICIO, ENVIO_FECHA_ENTREGA, ENVIO_COSTO, ENVIO_TIPO
     FROM gd_esquema.Maestra
     WHERE ENVIO_CODIGO IS NOT NULL
     ORDER BY ENVIO_CODIGO ASC;
@@ -476,35 +476,31 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago') ----- Sofi con dudas
     DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_medio_pago
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[MedioDePago] (Codigo_MedioPago, Descripcion)
+    INSERT INTO [EXEL_ENTES].[MedioDePago] (Descripcion_medio_pago, Tipo_Medio_Pago_Codigo)
     SELECT DISTINCT PAGO_MEDIO_PAGO, PAGO_TIPO_MEDIO_PAGO
     FROM gd_esquema.Maestra
-    WHERE PAGO_MEDIO_PAGO IS NOT NULL
-    ORDER BY PAGO_MEDIO_PAGO ASC;
 END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio') ----- SOfi
     DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_envio
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[TipoEnvio] (Codigo_TipoEnvio, Descripcion)
-    SELECT DISTINCT ENVIO_TIPO, ENVIO_DESCRIPCION
+    INSERT INTO [EXEL_ENTES].[TipoEnvio] (Descripcion)
+    SELECT DISTINCT ENVIO_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE ENVIO_TIPO IS NOT NULL
-    ORDER BY ENVIO_TIPO ASC;
 END
 GO
 
@@ -595,7 +591,7 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago')
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago') ------- Sofi con dudas
     DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
 GO
 
@@ -633,8 +629,6 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')
     DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
 GO
 
-
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_subrubro
 AS
 BEGIN
@@ -646,59 +640,7 @@ BEGIN
 END
 GO
 
-------------------------------------------------------------------------------------------------------------------------------
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_pago;
-GO
-
-CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_pago
-AS
-BEGIN
-    INSERT INTO [EXEL_ENTES].[Detalle_Pago] (Nro_Pago, Medio_Pago, Codigo_Cliente, Fecha_Vencimiento, Costo, Nro_Tarjeta)
-    SELECT DISTINCT 
-        PAGO_CODIGO, 
-        PAGO_MEDIO_PAGO, 
-        CLIENTE_CODIGO, 
-        PAGO_FECHA_VENC_TARJETA, 
-        PAGO_IMPORTE, 
-        PAGO_NRO_TARJETA
-    FROM 
-        gd_esquema.Maestra
-    WHERE 
-        PAGO_CODIGO IS NOT NULL 
-        AND PAGO_NRO_TARJETA IS NOT NULL
-    ORDER BY 
-        PAGO_CODIGO ASC;
-END
-GO
-
-------------------------------------------------------------------------------------------------------------------------------
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_factura;
-GO
-
-CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_factura
-AS
-BEGIN
-    INSERT INTO [EXEL_ENTES].[Detalle_Factura] (Nro_Factura, Codigo_Publicacion, Cantidad, Precio)
-    SELECT DISTINCT 
-        FACTURA_NUMERO, 
-        PUBLICACION_CODIGO, 
-        FACTURA_DET_CANTIDAD, 
-        FACTURA_DET_PRECIO
-    FROM 
-        gd_esquema.Maestra
-    WHERE 
-        FACTURA_NUMERO IS NOT NULL 
-        AND PUBLICACION_CODIGO IS NOT NULL
-    ORDER BY 
-        FACTURA_NUMERO ASC;
-END
-GO
-
- -------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_venta')
     DROP PROCEDURE [EXEL_ENTES].migrar_detalle_venta;
 GO
