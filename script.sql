@@ -4,6 +4,18 @@ GO
 --============================================================================================================================
 --    Creacion de schema
 --============================================================================================================================
+-- para eliminar el schema ---------------------------------------------
+IF EXISTS (SELECT schema_id FROM sys.schemas WHERE name = 'EXEL_ENTES')
+BEGIN
+	EXEC('DROP SCHEMA EXEL_ENTES;');
+	PRINT 'Schema EXEL_ENTES eliminado correctamente.';
+END
+ELSE
+BEGIN
+	PRINT 'Schema EXEL_ENTES no existe.';
+END
+------------------------------------------------------------------------
+
 
 IF NOT EXISTS (SELECT schema_id FROM sys.schemas WHERE name = 'EXEL_ENTES')
 BEGIN
@@ -110,27 +122,27 @@ CREATE TABLE [EXEL_ENTES].[Vendedor] (
 	Vendedor_Mail NVARCHAR(50)
 );
 
-CREATE TABLE [EXEL_ENTES].[Producto] (
-    Codigo_Producto NVARCHAR(50) NOT NULL,
-	CONSTRAINT [PK_Producto] PRIMARY KEY (Codigo_Producto),
-    Rubro NVARCHAR(50),
-    Codigo_Marca NVARCHAR(50),
-    Descripcion NVARCHAR(50),
-    Modelo NVARCHAR(50)
-);
 
 CREATE TABLE [EXEL_ENTES].[Publicacion] (
     Codigo_Publicacion DECIMAL(18, 0) NOT NULL,
-	CONSTRAINT [PK_Publicacion] PRIMARY KEY (Codigo_Publicacion),
-    CONSTRAINT [FK_Publicacion_Codigo_Producto] FOREIGN KEY (Codigo_Producto) REFERENCES [EXEL_ENTES].[Producto](Codigo_Producto),
-    CONSTRAINT [FK_Publicacion_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Vendedor),
+	CONSTRAINT [PK_Publicacion] PRIMARY KEY (Codigo_Publicacion),CONSTRAINT [FK_Publicacion_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Vendedor),
     Codigo_Almacen DECIMAL(18, 0),
-    Codigo_Producto NVARCHAR(50),
     Codigo_Vendedor INT,
     Fecha_Inicio DATE,
     Fecha_Fin DATE,
     Stock DECIMAL(18, 0),
     Precio DECIMAL(18, 2)
+);
+
+CREATE TABLE [EXEL_ENTES].[Producto] (
+    Codigo_Producto NVARCHAR(50) NOT NULL ,
+	Codigo_Publicacion DECIMAL(18,0) NOT NULL,
+	CONSTRAINT [PK_Producto] PRIMARY KEY (Codigo_Producto, Codigo_Publicacion),
+    CONSTRAINT [FK_Publicacion_Codigo_Producto] FOREIGN KEY (Codigo_Publicacion) REFERENCES [EXEL_ENTES].[Publicacion](Codigo_Publicacion),
+    Rubro NVARCHAR(50),
+    Codigo_Marca NVARCHAR(50),
+    Descripcion NVARCHAR(50),
+    Modelo NVARCHAR(50)
 );
 
 CREATE TABLE [EXEL_ENTES].[Venta] (
@@ -236,8 +248,15 @@ CREATE TABLE [EXEL_ENTES].[Envio] (
 );
 
 CREATE TABLE [EXEL_ENTES].[Marca] (
-    Codigo_Marca NVARCHAR(50) NOT NULL,
+    Codigo_Marca INT IDENTITY(1,1) NOT NULL,
 	CONSTRAINT [PK_Marca] PRIMARY KEY (Codigo_Marca),
+    Descripcion NVARCHAR(50) NULL
+);
+
+
+CREATE TABLE [EXEL_ENTES].[Rubro] (
+    Codigo_Rubro INT IDENTITY(1,1) NOT NULL,
+	CONSTRAINT [PK_Rubro] PRIMARY KEY (Codigo_Rubro),
     Descripcion NVARCHAR(50) NULL
 );
 
@@ -245,14 +264,8 @@ CREATE TABLE [EXEL_ENTES].[Subrubro] (
     Codigo_Subrubro INT IDENTITY(1,1) NOT NULL,
 	CONSTRAINT [PK_Subrubro] PRIMARY KEY (Codigo_Subrubro),
     Descripcion NVARCHAR(50) NULL,
-);
-
-CREATE TABLE [EXEL_ENTES].[Rubro] (
-    Codigo_Rubro INT IDENTITY(1,1) NOT NULL,
-	CONSTRAINT [PK_Rubro] PRIMARY KEY (Codigo_Rubro),
-    Descripcion NVARCHAR(50) NULL
-	CONSTRAINT [FK_Rubro_Codigo_Subrubro] FOREIGN KEY (Codigo_Subrubro) REFERENCES [EXEL_ENTES].[Subrubro](Codigo_Subrubro),
-	Codigo_Subrubro INT NOT NULL
+	Codigo_Rubro INT NOT NULL,
+	CONSTRAINT [FK_Rubro_Codigo_Subrubro] FOREIGN KEY (Codigo_Rubro) REFERENCES [EXEL_ENTES].[Rubro](Codigo_Rubro)
 );
 
 CREATE TABLE [EXEL_ENTES].[Provincia] (
@@ -286,25 +299,67 @@ CREATE TABLE [EXEL_ENTES].[Modelo] (
     Descripcion NVARCHAR(255) NULL
 );
 
-
-
 --============================================================================================================================
 
 
 
+
+-- Dropeo de procedures
+
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_usuario')
+	DROP PROCEDURE [EXEL_ENTES].migrar_usuario;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_cliente')
+    DROP PROCEDURE [EXEL_ENTES].migrar_cliente;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_vendedor')
+    DROP PROCEDURE [EXEL_ENTES].migrar_vendedor;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_producto')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_producto;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_publicacion') 
+    DROP PROCEDURE [EXEL_ENTES].migrar_publicacion;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_venta')
+    DROP PROCEDURE [EXEL_ENTES].migrar_venta;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_factura')
+    DROP PROCEDURE [EXEL_ENTES].migrar_factura;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago')
+    DROP PROCEDURE [EXEL_ENTES].migrar_pago;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') 
+    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') 
+    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
+    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_rubro')
+    DROP PROCEDURE [EXEL_ENTES].migrar_rubro;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_modelo')
+    DROP PROCEDURE [EXEL_ENTES].migrar_modelo;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_provincia')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_provincia;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_localidad')
+    DROP PROCEDURE [EXEL_ENTES].migrar_localidad;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_venta')
+    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_venta;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura')
+    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_factura;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_pago')
+    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_pago;
 
 
 --============================================================================================================================
 --    Creacion de stored procedures
 --============================================================================================================================
 
--- creamos los procedures ----------------------------------------------------------------------------------------------------
-
 -- IDEA DE MIGRACION PARA USUARIO
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_usuario')
-    DROP PROCEDURE [EXEL_ENTES].migrar_usuario;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_usuario
 AS
 BEGIN
@@ -347,12 +402,9 @@ EXECUTE [EXEL_ENTES].migrar_usuario;
 
 --select Nombre, Pass from EXEL_ENTES.Usuario
 --select * from gd_esquema.Maestra
--- =============================================================
+------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_cliente')
-    DROP PROCEDURE [EXEL_ENTES].migrar_cliente;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_cliente
 AS
 BEGIN
@@ -362,13 +414,10 @@ BEGIN
 END
 GO
 
---EXECUTE [EXEL_ENTES].migrar_cliente
+EXECUTE [EXEL_ENTES].migrar_cliente
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_vendedor')
-    DROP PROCEDURE [EXEL_ENTES].migrar_vendedor;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_vendedor
 AS
 BEGIN
@@ -380,49 +429,53 @@ GO
 
 --SELECT * FROM EXEL_ENTES.Vendedor
 --EXECUTE [EXEL_ENTES].migrar_vendedor;
-
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_producto')
-    DROP PROCEDURE [EXEL_ENTES].migrar_producto;
 GO
-
-CREATE PROCEDURE [EXEL_ENTES].migrar_producto
-AS
-BEGIN
-    INSERT INTO [EXEL_ENTES].[Producto] (Codigo_Producto, Rubro, Codigo_Marca, Descripcion, Modelo)
-    SELECT DISTINCT PRODUCTO_CODIGO, PRODUCTO_SUB_RUBRO, PRODUCTO_MARCA, PRODUCTO_DESCRIPCION, PRODUCTO_MOD_CODIGO
-    FROM gd_esquema.Maestra
-    WHERE PRODUCTO_CODIGO IS NOT NULL
-    ORDER BY PRODUCTO_CODIGO ASC;
-END
-GO
-
---EXECUTE [EXEL_ENTES].migrar_producto
-
-------------------------------------------------------------------------------------------------------------------------------
-
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_publicacion')
-    DROP PROCEDURE [EXEL_ENTES].migrar_publicacion;
-GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_publicacion
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Codigo_Producto, Fecha_Inicio, Fecha_Fin, Stock, Precio)
-    SELECT DISTINCT PUBLICACION_CODIGO, PRODUCTO_CODIGO, PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
+    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Fecha_Inicio, Fecha_Fin, Stock, Precio)
+    SELECT DISTINCT PUBLICACION_CODIGO, PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
     FROM gd_esquema.Maestra
     WHERE PUBLICACION_CODIGO IS NOT NULL
     ORDER BY PUBLICACION_CODIGO ASC;
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_publicacion
+
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_venta')
-    DROP PROCEDURE [EXEL_ENTES].migrar_venta;
-GO
+--===================================
+-- FUNCIONANDO
+--===================================
 
+GO
+CREATE PROCEDURE [EXEL_ENTES].migrar_producto
+AS
+BEGIN
+    INSERT INTO [EXEL_ENTES].[Producto] (Codigo_Producto, Codigo_Publicacion, Rubro, Codigo_Marca, Descripcion, Modelo)
+    SELECT DISTINCT PRODUCTO_CODIGO, PUBLICACION_CODIGO ,PRODUCTO_SUB_RUBRO, PRODUCTO_MARCA, PRODUCTO_DESCRIPCION, PRODUCTO_MOD_CODIGO
+    FROM gd_esquema.Maestra
+    WHERE PRODUCTO_CODIGO IS NOT NULL
+    ORDER BY PRODUCTO_CODIGO ASC;
+END
+GO
+--select * from gd_esquema.Maestra where PRODUCTO_CODIGO = 'Codigo:0131231312'
+
+EXECUTE [EXEL_ENTES].migrar_producto
+
+------------------------------------------------------------------------------------------------------------------------------
+
+--===================================
+-- FUNCIONANDO
+--===================================
+
+GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_venta
 AS
 BEGIN
@@ -434,12 +487,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_venta
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_factura')
-    DROP PROCEDURE [EXEL_ENTES].migrar_factura;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_factura
 AS
 BEGIN
@@ -450,12 +505,15 @@ BEGIN
     ORDER BY FACTURA_NUMERO ASC;
 END
 GO
+
+EXECUTE [EXEL_ENTES].migrar_factura
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago') ----- Sofi
-    DROP PROCEDURE [EXEL_ENTES].migrar_pago;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_pago
 AS
 BEGIN
@@ -465,12 +523,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_pago
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen') -------- Sofi
-    DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_almacen
 AS
 BEGIN
@@ -482,12 +542,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_almacen
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') ----- Sofi
-    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_envio
 AS
 BEGIN
@@ -497,27 +559,31 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_envio
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago') ----- Sofi con dudas // OK
-    DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_medio_pago
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[MedioDePago] (Descripcion_medio_pago, Tipo_Medio_Pago_Codigo)
-    SELECT DISTINCT PAGO_MEDIO_PAGO, PAGO_TIPO_MEDIO_PAGO
+    INSERT INTO [EXEL_ENTES].[MedioDePago] (Descripcion_medio_pago)
+    SELECT DISTINCT PAGO_MEDIO_PAGO
     FROM gd_esquema.Maestra
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_medio_pago
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio') ----- SOfi // OK, la descripcion estaba en la columna ENVIO_TIPO
-    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_envio
 AS
 BEGIN
@@ -527,32 +593,32 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_tipo_envio
+
 -- SELECT ENVIO_TIPO FROM gd_esquema.Maestra
-
-
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
-    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_marca
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Marca] (Codigo_Marca) -- , Descripcion)   No existe una descripcion como tal TENEMOS QUE REVISAR EL DER
+    INSERT INTO [EXEL_ENTES].[Marca] (Descripcion) -- , Descripcion)   No existe una descripcion como tal TENEMOS QUE REVISAR EL DER
     SELECT DISTINCT PRODUCTO_MARCA -- PRODUCTO_MARCA_DESCRIPCION
     FROM gd_esquema.Maestra
-    WHERE PRODUCTO_MARCA IS NOT NULL
-    ORDER BY PRODUCTO_MARCA ASC;
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_marca
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_rubro')
-    DROP PROCEDURE [EXEL_ENTES].migrar_rubro;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_rubro
 AS
 BEGIN
@@ -562,13 +628,13 @@ BEGIN
 END
 GO
 
---SELECT DISTINCT CLI_USUARIO_DOMICILIO_LOCALIDAD FROM gd_esquema.Maestra
+EXECUTE [EXEL_ENTES].migrar_rubro
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_localidad')
-    DROP PROCEDURE [EXEL_ENTES].migrar_localidad;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_localidad
 AS
 BEGIN
@@ -580,12 +646,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_localidad
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_modelo')
-    DROP PROCEDURE [EXEL_ENTES].migrar_modelo;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_modelo
 AS
 BEGIN
@@ -597,12 +665,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_modelo
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_provincia')
-    DROP PROCEDURE [EXEL_ENTES].migrar_provincia;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_provincia
 AS
 BEGIN
@@ -614,12 +684,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_provincia
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- FUNCIONANDO
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago') ------- Sofi con dudas
-    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago
 AS
 BEGIN
@@ -631,12 +703,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_tipo_medio_pago
+
 ------------------------------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')
-    DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_subrubro
 AS
 BEGIN
@@ -648,11 +722,14 @@ BEGIN
 END
 GO
 
--------------------------------------------------------------------------------------------------------
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_venta')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_venta;
-GO
+EXECUTE [EXEL_ENTES].migrar_subrubro
 
+-------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
+
+GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_venta
 AS
 BEGIN
@@ -672,12 +749,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_detalle_venta
+
 -------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_factura;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_factura
 AS
 BEGIN
@@ -688,12 +767,14 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_detalle_factura
+
 -------------------------------------------------------------------------------------------------------
+--===================================
+-- CORREGIR
+--===================================
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_pago;
 GO
-
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_pago
 AS
 BEGIN
@@ -704,6 +785,7 @@ BEGIN
 END
 GO
 
+EXECUTE [EXEL_ENTES].migrar_detalle_pago
 
 /*--------------------------------FIN DE EJECUCION DE STORED PROCEDURES: MIGRACION------------------------- -------*/
 BEGIN TRANSACTION
