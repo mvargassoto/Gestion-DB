@@ -97,35 +97,34 @@ CREATE TABLE [EXEL_ENTES].[Usuario] (
 	Domicilio_Depto NVARCHAR(50),
 	Domicilio_CP NVARCHAR(50),
 	Domicilio_Localidad NVARCHAR(50),
-	Domicilio_Provincia NVARCHAR(50)
+	Domicilio_Provincia NVARCHAR(50),
+	Mail NVARCHAR(50)
 );
 
 CREATE TABLE [EXEL_ENTES].[Cliente] (
-    Codigo_Cliente INT IDENTITY(1,1) NOT NULL,
+    -- Codigo_Cliente INT IDENTITY(1,1) NOT NULL,    LA IDEA VA A SER COMPARTIR CODIGO CON USUARIO
 	Codigo_Usuario INT NOT NULL,
-	CONSTRAINT [PK_Cliente] PRIMARY KEY (Codigo_Cliente),
+	CONSTRAINT [PK_Cliente] PRIMARY KEY (Codigo_Usuario),
     CONSTRAINT [FK_Cliente_Codigo_usuario] FOREIGN KEY (Codigo_Usuario) REFERENCES [EXEL_ENTES].[Usuario](Codigo_Usuario),
 	Cliente_Nombre NVARCHAR(50),
 	Cliente_Apellido NVARCHAR(50),
 	Cliente_Fecha_Nac DATE,
-	Cliente_Mail NVARCHAR(50),
 	Cliente_DNI DECIMAL(18,0)
 );
 
 CREATE TABLE [EXEL_ENTES].[Vendedor] (
-    Codigo_Vendedor INT IDENTITY(1,1) NOT NULL,
-	CONSTRAINT [PK_Vendedor] PRIMARY KEY (Codigo_Vendedor),
-	CONSTRAINT [FK_Vendedor_Codigo_usuario] FOREIGN KEY (Codigo_Usuario) REFERENCES [EXEL_ENTES].[Usuario](Codigo_Usuario),
     Codigo_Usuario INT NOT NULL,
+--    Codigo_Vendedor INT IDENTITY(1,1) NOT NULL,
+	CONSTRAINT [PK_Vendedor] PRIMARY KEY (Codigo_Usuario),
+	CONSTRAINT [FK_Vendedor_Codigo_usuario] FOREIGN KEY (Codigo_Usuario) REFERENCES [EXEL_ENTES].[Usuario](Codigo_Usuario),
     Vendedor_Razon_Social NVARCHAR(50),
-    Vendedor_CUIT NVARCHAR(50),
-	Vendedor_Mail NVARCHAR(50)
+    Vendedor_CUIT NVARCHAR(50)
 );
 
 
 CREATE TABLE [EXEL_ENTES].[Publicacion] (
     Codigo_Publicacion DECIMAL(18, 0) NOT NULL,
-	CONSTRAINT [PK_Publicacion] PRIMARY KEY (Codigo_Publicacion),CONSTRAINT [FK_Publicacion_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Vendedor),
+	CONSTRAINT [PK_Publicacion] PRIMARY KEY (Codigo_Publicacion),CONSTRAINT [FK_Publicacion_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Usuario),
     Codigo_Almacen DECIMAL(18, 0),
     Codigo_Vendedor INT,
     Fecha_Inicio DATE,
@@ -148,7 +147,7 @@ CREATE TABLE [EXEL_ENTES].[Producto] (
 CREATE TABLE [EXEL_ENTES].[Venta] (
     Numero_Venta DECIMAL(18, 0) NOT NULL,
 	CONSTRAINT [PK_Venta] PRIMARY KEY (Numero_Venta),
-    CONSTRAINT [FK_Venta_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente),
+    CONSTRAINT [FK_Venta_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Usuario),
     CONSTRAINT [FK_Venta_Codigo_Publicacion] FOREIGN KEY (Codigo_Publicacion) REFERENCES [EXEL_ENTES].[Publicacion](Codigo_Publicacion),
     Codigo_Cliente INT,
     Codigo_Publicacion DECIMAL(18, 0),
@@ -169,10 +168,10 @@ CREATE TABLE [EXEL_ENTES].[Almacen] (
 CREATE TABLE [EXEL_ENTES].[Factura] (
     Numero_Factura DECIMAL(18, 0) NOT NULL,
 	CONSTRAINT [PK_Factura] PRIMARY KEY (Numero_Factura),
-    CONSTRAINT [FK_Factura_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Vendedor),
-    CONSTRAINT [FK_Factura_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente),
-    Codigo_Vendedor INT NOT NULL,
-    Codigo_Cliente INT NOT NULL,
+    CONSTRAINT [FK_Factura_Codigo_Vendedor] FOREIGN KEY (Codigo_Vendedor) REFERENCES [EXEL_ENTES].[Vendedor](Codigo_Usuario),
+    CONSTRAINT [FK_Factura_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Usuario),
+    Codigo_Vendedor INT NULL,
+    Codigo_Cliente INT NULL,
     Fecha_Factura DATE NULL,
     Total DECIMAL(18, 2) NULL
 );
@@ -195,7 +194,7 @@ CREATE TABLE [EXEL_ENTES].[Pago] (
     Numero_Pago INT IDENTITY(1,1) NOT NULL,
 	CONSTRAINT [PK_Pago] PRIMARY KEY (Numero_Pago),
     CONSTRAINT [FK_Pago_Numero_Venta] FOREIGN KEY (Codigo_Numero_Venta) REFERENCES [EXEL_ENTES].[Venta](Numero_Venta),
-    CONSTRAINT [FK_Pago_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente), ---
+    CONSTRAINT [FK_Pago_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Usuario), ---
     CONSTRAINT [FK_Pago_Codigo_MedioPago] FOREIGN KEY (Codigo_MedioPago) REFERENCES [EXEL_ENTES].[MedioDePago](Codigo_MedioPago),    
 	Codigo_Numero_Venta DECIMAL(18, 0) NOT NULL,
     Codigo_Cliente INT NOT NULL, ---------
@@ -209,7 +208,7 @@ CREATE TABLE [EXEL_ENTES].[Detalle_Pago] (
     CONSTRAINT [FK_Medio_Pago] FOREIGN KEY (Medio_Pago) REFERENCES [EXEL_ENTES].[MedioDePago](Codigo_MedioPago),
     Nro_Pago INT NOT NULL,
     Medio_Pago INT NOT NULL,
-    CONSTRAINT [FK_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Cliente), 
+    CONSTRAINT [FK_Codigo_Cliente] FOREIGN KEY (Codigo_Cliente) REFERENCES [EXEL_ENTES].[Cliente](Codigo_Usuario), 
     Fecha_Vencimiento_Tarjeta DATE NULL,
 	Codigo_Cliente INT NOT NULL,
     Cuotas DECIMAL(18, 2) NULL,
@@ -364,7 +363,7 @@ CREATE PROCEDURE [EXEL_ENTES].migrar_usuario
 AS
 BEGIN
     -- Inserta los datos combinados de CLI_USUARIO y VEN_USUARIO en la tabla Usuario
-    INSERT INTO [EXEL_ENTES].[Usuario] (Nombre, Pass, Fecha_Creacion, Domicilio_Calle, Domicilio_Nro_Calle, Domicilio_Piso, Domicilio_Depto, Domicilio_CP, Domicilio_Localidad, Domicilio_Provincia)
+    INSERT INTO [EXEL_ENTES].[Usuario] (Nombre, Pass, Fecha_Creacion, Domicilio_Calle, Domicilio_Nro_Calle, Domicilio_Piso, Domicilio_Depto, Domicilio_CP, Domicilio_Localidad, Domicilio_Provincia, Mail)
     SELECT DISTINCT 
         CLI_USUARIO_NOMBRE as Nombre, 
         CLI_USUARIO_PASS as Pass, 
@@ -375,7 +374,8 @@ BEGIN
         CLI_USUARIO_DOMICILIO_DEPTO as Domicilio_Depto,
 		CLI_USUARIO_DOMICILIO_CP as Domicilio_CP,
 		CLI_USUARIO_DOMICILIO_LOCALIDAD as Domicilio_Localidad,
-		CLI_USUARIO_DOMICILIO_PROVINCIA as Domicilio_Provincia
+		CLI_USUARIO_DOMICILIO_PROVINCIA as Domicilio_Provincia,
+		CLIENTE_MAIL as Mail
     FROM gd_esquema.Maestra
     WHERE CLI_USUARIO_NOMBRE IS NOT NULL
 
@@ -391,7 +391,8 @@ BEGIN
         VEN_USUARIO_DOMICILIO_DEPTO as Domicilio_Depto,
 		VEN_USUARIO_DOMICILIO_CP as Domicilio_CP,
 		VEN_USUARIO_DOMICILIO_LOCALIDAD as Domicilio_Localidad,
-		VEN_USUARIO_DOMICILIO_PROVINCIA as Domicilio_Provincia
+		VEN_USUARIO_DOMICILIO_PROVINCIA as Domicilio_Provincia,
+		VENDEDOR_MAIL as Mail
     FROM gd_esquema.Maestra
     WHERE VEN_USUARIO_NOMBRE IS NOT NULL
     ORDER BY Nombre ASC;
@@ -400,35 +401,46 @@ GO
 
 EXECUTE [EXEL_ENTES].migrar_usuario;
 
---select Nombre, Pass from EXEL_ENTES.Usuario
+select * from EXEL_ENTES.Usuario
 --select * from gd_esquema.Maestra
 ------------------------------------------------------------------------------------------------------------------------------
+select distinct CLIENTE_NOMBRE, CLIENTE_APELLIDO, CLI_USUARIO_DOMICILIO_CALLE, CLI_USUARIO_DOMICILIO_NRO_CALLE, CLI_USUARIO_FECHA_CREACION from gd_esquema.Maestra 
+order by CLIENTE_NOMBRE ASC 
+
 
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_cliente
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Cliente] (Cliente_Nombre, Cliente_Apellido, Cliente_Mail, Cliente_DNI, Cliente_Fecha_Nac)
-    SELECT DISTINCT CLIENTE_NOMBRE, CLIENTE_APELLIDO, CLIENTE_MAIL, CLIENTE_DNI, CLIENTE_FECHA_NAC
-    FROM gd_esquema.Maestra
+    INSERT INTO [EXEL_ENTES].[Cliente] (Codigo_Usuario, Cliente_Nombre, Cliente_Apellido, Cliente_DNI, Cliente_Fecha_Nac)
+    SELECT DISTINCT Codigo_Usuario, CLIENTE_NOMBRE, CLIENTE_APELLIDO, CLIENTE_DNI, CLIENTE_FECHA_NAC
+    FROM gd_esquema.Maestra maes
+	join EXEL_ENTES.Usuario usu on usu.Mail = maes.CLIENTE_MAIL and usu.Fecha_Creacion = maes.CLI_USUARIO_FECHA_CREACION 
+	WHERE CLIENTE_NOMBRE IS NOT NULL
 END
 GO
 
 EXECUTE [EXEL_ENTES].migrar_cliente
+select * from EXEL_ENTES.Usuario
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_vendedor
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Vendedor] (Vendedor_Mail, Vendedor_Razon_Social, Vendedor_CUIT)
-    SELECT DISTINCT VENDEDOR_MAIL,VENDEDOR_RAZON_SOCIAL, VENDEDOR_CUIT
-    FROM gd_esquema.Maestra
+    INSERT INTO [EXEL_ENTES].[Vendedor] (Codigo_Usuario, Vendedor_Razon_Social, Vendedor_CUIT)
+    SELECT DISTINCT Codigo_Usuario, VENDEDOR_RAZON_SOCIAL, VENDEDOR_CUIT
+    FROM gd_esquema.Maestra maes
+	join EXEL_ENTES.Usuario usu on usu.Mail = maes.VENDEDOR_MAIL and usu.Fecha_Creacion = maes.VEN_USUARIO_FECHA_CREACION
+	where maes.VENDEDOR_RAZON_SOCIAL is not null
 END
 GO
 
 --SELECT * FROM EXEL_ENTES.Vendedor
---EXECUTE [EXEL_ENTES].migrar_vendedor;
+EXECUTE [EXEL_ENTES].migrar_vendedor;
+
+select * from EXEL_ENTES.Vendedor
+
 ------------------------------------------------------------------------------------------------------------------------------
 --===================================
 -- FUNCIONANDO
@@ -438,9 +450,10 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_publicacion
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Fecha_Inicio, Fecha_Fin, Stock, Precio)
-    SELECT DISTINCT PUBLICACION_CODIGO, PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
-    FROM gd_esquema.Maestra
+    INSERT INTO [EXEL_ENTES].[Publicacion] (Codigo_Publicacion, Codigo_Almacen, Codigo_Vendedor , Fecha_Inicio, Fecha_Fin, Stock, Precio)
+    SELECT DISTINCT PUBLICACION_CODIGO, ALMACEN_CODIGO, ven.Codigo_Usuario , PUBLICACION_FECHA, PUBLICACION_FECHA_V, PUBLICACION_STOCK, PUBLICACION_PRECIO
+    FROM gd_esquema.Maestra maes
+	join EXEL_ENTES.Vendedor ven on ven.Vendedor_Razon_Social = maes.VENDEDOR_RAZON_SOCIAL and ven.Vendedor_CUIT = maes.VENDEDOR_CUIT
     WHERE PUBLICACION_CODIGO IS NOT NULL
     ORDER BY PUBLICACION_CODIGO ASC;
 END
@@ -491,22 +504,46 @@ EXECUTE [EXEL_ENTES].migrar_venta
 
 ------------------------------------------------------------------------------------------------------------------------------
 --===================================
--- CORREGIR
+-- FUNCIONANDO
 --===================================
+select * from EXEL_ENTES.Usuario
 
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_factura
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Factura] (Numero_Factura, Fecha_Factura, Total)
-    SELECT DISTINCT FACTURA_NUMERO, FACTURA_FECHA, FACTURA_TOTAL
-    FROM gd_esquema.Maestra
-    WHERE FACTURA_NUMERO IS NOT NULL
+    INSERT INTO [EXEL_ENTES].[Factura] (Numero_Factura, Fecha_Factura, Total, Codigo_Cliente, Codigo_Vendedor)
+    SELECT DISTINCT FACTURA_NUMERO, FACTURA_FECHA, FACTURA_TOTAL,
+			/*(
+				select top 1 clie1.Codigo_Usuario
+				from EXEL_ENTES.Publicacion publi 
+				right join EXEL_ENTES.Usuario usu1 on 
+							publi.Codigo_Vendedor = usu1.Codigo_Usuario
+				join EXEL_ENTES.Cliente clie1 on clie1.Codigo_Usuario = usu1.Codigo_Usuario
+				where publi.Codigo_Publicacion = maes.PUBLICACION_CODIGO
+				-- queda buscar para ese codigo de publicacion el cliente 
+			),*/
+			(
+				select top 1 (
+						select top 1 usu2.Codigo_Usuario from EXEL_ENTES.Usuario usu2 
+						where usu2.Mail = maes1.CLIENTE_MAIL
+				)
+				from gd_esquema.Maestra maes1 
+				where maes1.PUBLICACION_CODIGO = maes.PUBLICACION_CODIGO
+			) as Codigo_Cliente,
+			(
+				select top 1 pub.Codigo_Vendedor
+				from EXEL_ENTES.Publicacion pub
+				where pub.Codigo_Publicacion = maes.PUBLICACION_CODIGO
+			) as Codigo_Vendedor
+    FROM gd_esquema.Maestra maes
+	WHERE FACTURA_NUMERO IS NOT NULL
     ORDER BY FACTURA_NUMERO ASC;
 END
 GO
 
 EXECUTE [EXEL_ENTES].migrar_factura
+
 
 ------------------------------------------------------------------------------------------------------------------------------
 --===================================
