@@ -485,7 +485,8 @@ END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
-
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
+    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_marca
 AS
@@ -533,6 +534,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_venta')
+    DROP PROCEDURE [EXEL_ENTES].migrar_venta;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_venta
 AS
@@ -547,6 +550,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_factura')
+    DROP PROCEDURE [EXEL_ENTES].migrar_factura;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_factura
 AS
@@ -574,6 +579,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago')
+    DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_medio_pago
 AS
@@ -609,6 +616,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_provincia')
+    DROP PROCEDURE [EXEL_ENTES].migrar_provincia;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_provincia
 AS
@@ -660,6 +669,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')
+    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_envio
 AS
@@ -691,6 +702,8 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago')
+    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago
 AS
@@ -768,25 +781,26 @@ BEGIN TRY
     EXECUTE [EXEL_ENTES].migrar_usuario;
     EXECUTE [EXEL_ENTES].migrar_cliente;
     EXECUTE [EXEL_ENTES].migrar_vendedor;
-    EXECUTE [EXEL_ENTES].migrar_producto;
     EXECUTE [EXEL_ENTES].migrar_publicacion;
+    EXECUTE [EXEL_ENTES].migrar_rubro;
+    EXECUTE [EXEL_ENTES].migrar_subrubro;
+    EXECUTE [EXEL_ENTES].migrar_marca;
+    EXECUTE [EXEL_ENTES].migrar_modelo;
+    EXECUTE [EXEL_ENTES].migrar_producto;
     EXECUTE [EXEL_ENTES].migrar_venta;
     EXECUTE [EXEL_ENTES].migrar_factura;
-    EXECUTE [EXEL_ENTES].migrar_detalle_factura;
-    EXECUTE [EXEL_ENTES].migrar_pago;
-    EXECUTE [EXEL_ENTES].migrar_detalle_pago;
-    EXECUTE [EXEL_ENTES].migrar_almacen;
-    EXECUTE [EXEL_ENTES].migrar_envio;
     EXECUTE [EXEL_ENTES].migrar_medio_pago;
-    EXECUTE [EXEL_ENTES].migrar_tipo_envio;
-    EXECUTE [EXEL_ENTES].migrar_marca;
-    EXECUTE [EXEL_ENTES].migrar_rubro;
-    EXECUTE [EXEL_ENTES].migrar_localidad;
-    EXECUTE [EXEL_ENTES].migrar_modelo;
+    EXECUTE [EXEL_ENTES].migrar_pago;
     EXECUTE [EXEL_ENTES].migrar_provincia;
+    EXECUTE [EXEL_ENTES].migrar_localidad;
+    EXECUTE [EXEL_ENTES].migrar_almacen;
+    EXECUTE [EXEL_ENTES].migrar_tipo_envio;
+    EXECUTE [EXEL_ENTES].migrar_envio;
     EXECUTE [EXEL_ENTES].migrar_tipo_medio_pago;
-    EXECUTE [EXEL_ENTES].migrar_subrubro;
     EXECUTE [EXEL_ENTES].migrar_detalle_venta;
+    EXECUTE [EXEL_ENTES].migrar_detalle_factura;
+    EXECUTE [EXEL_ENTES].migrar_detalle_pago;
+
 
     -- Si todo está correcto, realizamos el commit de la transacción
     COMMIT TRANSACTION;
