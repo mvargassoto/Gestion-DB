@@ -17,6 +17,8 @@ END*/
 USE GD2C2024
 GO
 
+--    Creacion de schema
+
 IF NOT EXISTS (SELECT schema_id FROM sys.schemas WHERE name = 'EXEL_ENTES')
 BEGIN
 	EXEC('CREATE SCHEMA EXEL_ENTES;');
@@ -27,7 +29,6 @@ BEGIN
 	PRINT 'Schema EXEL_ENTES ya existe.';
 END
 
---============================================================================================================================
 
 
 
@@ -305,9 +306,9 @@ CREATE TABLE [EXEL_ENTES].[Detalle_Factura] (
 );
 
 
-
 --============================================================================================================================
-
+--    Creacion de stored procedures
+--============================================================================================================================
 -- Dropeo de procedures
 
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_usuario')
@@ -316,40 +317,38 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_cliente')
     DROP PROCEDURE [EXEL_ENTES].migrar_cliente;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_vendedor')
     DROP PROCEDURE [EXEL_ENTES].migrar_vendedor;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_producto')  
-    DROP PROCEDURE [EXEL_ENTES].migrar_producto;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_publicacion') 
     DROP PROCEDURE [EXEL_ENTES].migrar_publicacion;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_rubro')
+    DROP PROCEDURE [EXEL_ENTES].migrar_rubro;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
+    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_modelo')
+    DROP PROCEDURE [EXEL_ENTES].migrar_modelo;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_producto')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_producto;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_venta')
     DROP PROCEDURE [EXEL_ENTES].migrar_venta;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_factura')
     DROP PROCEDURE [EXEL_ENTES].migrar_factura;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_pago;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen')  
-    DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') 
-    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') 
-    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago')  
     DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')  
-    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
-    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_rubro')
-    DROP PROCEDURE [EXEL_ENTES].migrar_rubro;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_modelo')
-    DROP PROCEDURE [EXEL_ENTES].migrar_modelo;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago')
+    DROP PROCEDURE [EXEL_ENTES].migrar_pago;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_provincia')  
     DROP PROCEDURE [EXEL_ENTES].migrar_provincia;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_localidad')
     DROP PROCEDURE [EXEL_ENTES].migrar_localidad;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')  
+    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
+IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio') 
+    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago')  
     DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')  
-    DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_venta')
     DROP PROCEDURE [EXEL_ENTES].migrar_detalle_venta;
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura')
@@ -357,13 +356,8 @@ IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura'
 IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_pago')
     DROP PROCEDURE [EXEL_ENTES].migrar_detalle_pago;
 
+--    Creamos los procedures
 
---============================================================================================================================
---    Creacion de stored procedures
---============================================================================================================================
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_usuario')
-	DROP PROCEDURE [EXEL_ENTES].migrar_usuario;
--- IDEA DE MIGRACION PARA USUARIO
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_usuario
 AS
@@ -406,8 +400,7 @@ END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_cliente')
-    DROP PROCEDURE [EXEL_ENTES].migrar_cliente;
+
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_cliente
 AS
@@ -421,8 +414,7 @@ END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_vendedor')
-    DROP PROCEDURE [EXEL_ENTES].migrar_vendedor;
+
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_vendedor
 AS
@@ -437,8 +429,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_publicacion') 
-    DROP PROCEDURE [EXEL_ENTES].migrar_publicacion;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_publicacion
 AS
@@ -454,8 +444,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_rubro') 
-    DROP PROCEDURE [EXEL_ENTES].migrar_rubro;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_rubro
 AS
@@ -468,8 +456,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_subrubro')
-    DROP PROCEDURE [EXEL_ENTES].migrar_subrubro;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_subrubro
 AS
@@ -485,8 +471,7 @@ END
 GO
 
 ------------------------------------------------------------------------------------------------------------------------------
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_marca')
-    DROP PROCEDURE [EXEL_ENTES].migrar_marca;
+
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_marca
 AS
@@ -499,8 +484,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_modelo')
-    DROP PROCEDURE [EXEL_ENTES].migrar_modelo;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_modelo
 AS
@@ -514,8 +497,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_producto')  
-    DROP PROCEDURE [EXEL_ENTES].migrar_producto;
 GO
 
 CREATE PROCEDURE [EXEL_ENTES].migrar_producto
@@ -534,8 +515,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_venta')
-    DROP PROCEDURE [EXEL_ENTES].migrar_venta;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_venta
 AS
@@ -550,8 +529,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_factura')
-    DROP PROCEDURE [EXEL_ENTES].migrar_factura;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_factura
 AS
@@ -579,8 +556,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_medio_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_medio_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_medio_pago
 AS
@@ -594,8 +569,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_pago
 AS
@@ -616,8 +589,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_provincia')
-    DROP PROCEDURE [EXEL_ENTES].migrar_provincia;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_provincia
 AS
@@ -633,8 +604,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_localidad')
-    DROP PROCEDURE [EXEL_ENTES].migrar_localidad;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_localidad
 AS
@@ -650,8 +619,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_almacen')
-    DROP PROCEDURE [EXEL_ENTES].migrar_almacen;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_almacen
 AS
@@ -669,8 +636,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_envio')
-    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_envio;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_envio
 AS
@@ -683,8 +648,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_envio')
-    DROP PROCEDURE [EXEL_ENTES].migrar_envio;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_envio
 AS
@@ -702,8 +665,6 @@ GO
 
 ------------------------------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_tipo_medio_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago
 AS
@@ -717,8 +678,6 @@ GO
 
 -------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_venta')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_venta;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_venta
 AS
@@ -742,8 +701,6 @@ GO
 
 -------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_factura')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_factura;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_factura
 AS
@@ -757,8 +714,6 @@ GO
 
 -------------------------------------------------------------------------------------------------------
 
-IF EXISTS (SELECT name FROM sys.procedures WHERE name = 'migrar_detalle_pago')
-    DROP PROCEDURE [EXEL_ENTES].migrar_detalle_pago;
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_detalle_pago
 AS
