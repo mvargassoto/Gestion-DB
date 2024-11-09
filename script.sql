@@ -29,9 +29,6 @@ BEGIN
 	PRINT 'Schema EXEL_ENTES ya existe.';
 END
 
-
-
-
 --============================================================================================================================
 --    Creacion de tablas
 --============================================================================================================================
@@ -519,9 +516,13 @@ GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_venta
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[Venta] (Numero_Venta, Codigo_Publicacion, Fecha_Venta, Total)
-    SELECT DISTINCT VENTA_CODIGO, PUBLICACION_CODIGO, VENTA_FECHA, VENTA_TOTAL
-    FROM gd_esquema.Maestra
+    INSERT INTO [EXEL_ENTES].[Venta] (Numero_Venta, Codigo_Publicacion, Fecha_Venta, Total, Codigo_Cliente)
+    SELECT DISTINCT VENTA_CODIGO, PUBLICACION_CODIGO, VENTA_FECHA, VENTA_TOTAL, clie.Codigo_Usuario
+    FROM gd_esquema.Maestra maes
+	join Cliente clie on
+		clie.Cliente_Nombre = maes.CLIENTE_NOMBRE and
+		clie.Cliente_Apellido = maes.CLIENTE_APELLIDO and
+		clie.Cliente_DNI = maes.CLIENTE_DNI
     WHERE VENTA_CODIGO IS NOT NULL
     ORDER BY VENTA_CODIGO ASC;
 END
