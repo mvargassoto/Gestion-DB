@@ -165,12 +165,12 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion INT NOT NULL,
     codigo_tiempo INT NOT NULL,
     codigo_rango_etario_cliente INT NOT NULL,
+	codigo_rango_horario_venta INT NOT NULL,
     codigo_medio_pago INT NOT NULL,
     codigo_rubrosubrubro INT NOT NULL,
     cantidad_ventas INT NOT NULL,
     sumatoria_importe DECIMAL(18, 2) NOT NULL,
     importe_cuotas DECIMAL(18, 2) NULL,
-    cantidad_ventas_cuotas INT NULL,
     CONSTRAINT [PK_BI_Hecho_Venta] PRIMARY KEY (codigo_ubicacion, codigo_tiempo, codigo_rango_etario_cliente, codigo_medio_pago, codigo_rubrosubrubro),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Ubicacion] FOREIGN KEY (codigo_ubicacion) REFERENCES [EXEL_ENTES].[BI_Ubicacion](bi_ubi_codigo),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
@@ -231,13 +231,24 @@ FROM (
 ) as Fechas
 order by year(Fechas.fecha) asc, [EXEL_ENTES].getCuatrimestre(Fechas.fecha) asc, month(Fechas.fecha) asc
 
--- Carga de dimensión Ubicación	  NOTA: la ubicacion que se necesita es la de los clientes, vamos a tener que revisar si no trae problemas
---										con la tabla de provincia y localidad en donde solo se tuvieron en cuenta de los almacenes
+-- Carga de dimensión Ubicación	  NOTA: va a ser necesario hacer un union de las ubicaciones que existen para almacenes con las de cliente
+
 INSERT INTO [EXEL_ENTES].[BI_Ubicacion] (bi_ubi_provincia, bi_ubi_localidad)
 SELECT DISTINCT 
-    u.Domicilio_Provincia,
-	u.Domicilio_Localidad
-FROM [EXEL_ENTES].Usuario u
+    ubi.provincia, ubi.localidad
+FROM (
+	select usuario.Domicilio_Provincia as provincia,
+		   usuario.Domicilio_Localidad as localidad
+	from [EXEL_ENTES].Usuario usuario
+
+	union
+
+	select prov.Descripcion as provincia,
+		   loc.Descripcion as localidad
+	from EXEL_ENTES.Localidad loc
+	join EXEL_ENTES.Provincia prov on
+		loc.Codigo_Provincia = prov.Codigo_Provincia
+) as ubi
 
 -- Cargar Dimensiones de Rangos		OK
 INSERT INTO [EXEL_ENTES].BI_Rango_Etario (bi_rango_etario_desc)
@@ -270,31 +281,28 @@ FROM EXEL_ENTES.TipoEnvio tipo
 /* ------- INICIO DE CARGA DE LOS HECHOS ------- */
 
  ------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- /
- -- version marcos
+
  INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion, -- la ubicacion es del cliente para el item 8
     codigo_tiempo, 
     codigo_rango_etario_cliente, 
     codigo_medio_pago, 
     codigo_rubrosubrubro,
+	codigo_rango_horario_venta,
 	cantidad_ventas,
 	sumatoria_importe,
-	importe_cuotas,
-	cantidad_ventas_cuotas
+	importe_cuotas
 )
-SELECT
-	usuario.Codigo_Usuario as [Codigo usuario],
-	usuario.Domicilio_Provincia as [Provincia],
-	usuario.Domicilio_Localidad as [Localidad] ,
+SELECT DISTINCT
 	ubicacion.bi_ubi_codigo as [Codigo ubicacion],
 	tiempo.bi_tiempo_codigo as [Codigo tiempo],
 	rango_etario.bi_rango_etario_codigo as [Codigo rango etario],
 	pago.Codigo_MedioPago as [Codigo medio pago],
-	publicacion.Codigo_Publicacion as [Codigo publicacion],
-	producto.Codigo_Producto as [Codigo producto],
-	rubro.Codigo_Rubro as [Rubro],
-	subrubro.Codigo_Subrubro as [Subrubro],
-	rubroSubrubro.bi_rubro_subrubro_codigo as [Codigo RubroSubrubro]
+	rubroSubrubro.bi_rubro_subrubro_codigo as [Codigo RubroSubrubro],
+	rango_horario.rango_horario_id as [Codigo rango horario],
+	sum(venta.Total) as [Importe],
+	count(distinct venta.Numero_Venta) as [Ventas],
+	isnull(sum(pago.Importe),0) as [Importe en cuotas]  -- en caso de que se calcule el importe de una ubicacion en donde no existan clientes
 FROM [EXEL_ENTES].Venta venta
 join [EXEL_ENTES].Cliente cliente on
 	venta.Codigo_Cliente = cliente.Codigo_Usuario
@@ -315,6 +323,8 @@ join [EXEL_ENTES].Detalle_Venta detalle_venta on
 	detalle_venta.Numero_Venta = venta.Numero_Venta
 join [EXEL_ENTES].Publicacion publicacion on
 	publicacion.Codigo_Publicacion = detalle_venta.Codigo_Publicacion
+join EXEL_ENTES.Almacen almacen on
+	publicacion.Codigo_Almacen = almacen.Codigo_Almacen
 join EXEL_ENTES.Producto producto on
 	producto.Codigo_Publicacion = publicacion.Codigo_Publicacion
 left join EXEL_ENTES.Subrubro subrubro on
@@ -323,51 +333,12 @@ left join EXEL_ENTES.Rubro rubro on
 	rubro.Codigo_Rubro = subrubro.Codigo_Subrubro
 left join EXEL_ENTES.BI_RubroSubrubro rubroSubrubro on
 	subrubro.Codigo_Subrubro = rubroSubrubro.subrubro
-
-
-INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
-    codigo_ubicacion, 
-    codigo_tiempo, 
-    codigo_rango_etario_cliente, 
-    codigo_medio_pago, 
-    codigo_rubrosubrubro,
-	cantidad_ventas,
-	sumatoria_importe,
-	importe_cuotas,
-	cantidad_ventas_cuotas
-)
-SELECT 
-    bi_ubi.bi_ubi_codigo, 
-    bi_tiempo.bi_tiempo_codigo, 
-    bi_re.bi_rango_etario_codigo, 
-    bi_mp.bi_tipoMedioPago_Codigo, 
-    bi_rubrosubrubro.bi_rubro_subrubro_codigo
-FROM [EXEL_ENTES].Venta v
-JOIN [EXEL_ENTES].Cliente c ON v.codigo_cliente = c.Codigo_Usuario
-join EXEL_ENTES.Publicacion publi on publi.Codigo_Publicacion = v.Codigo_Publicacion 
-join EXEL_ENTES.Almacen almacen on almacen.Codigo_Almacen = publi.Codigo_Almacen
-join EXEL_ENTES.Localidad localidad on almacen.Codigo_Localidad = localidad.Codigo_Localidad
-join EXEL_ENTES.Provincia provincia on provincia.Codigo_Provincia = localidad.Codigo_Provincia
-JOIN [EXEL_ENTES].[BI_Ubicacion] bi_ubi on bi_ubi.bi_ubi_localidad = localidad.Descripcion and bi_ubi.bi_ubi_provincia = provincia.Descripcion
-JOIN [EXEL_ENTES].[BI_Tiempo] bi_tiempo ON YEAR(v.fecha_venta) = bi_tiempo.bi_tiempo_anio AND MONTH(v.fecha_venta) = bi_tiempo.bi_tiempo_mes
-JOIN [EXEL_ENTES].[BI_Rango_Etario] bi_re ON [EXEL_ENTES].getRangoEtario(c.Cliente_Fecha_Nac) = bi_re.bi_rango_etario_desc
-join EXEL_ENTES.Pago pago on pago.Codigo_Numero_Venta = v.Numero_Venta
-join EXEL_ENTES.MedioDePago medioPago on pago.Codigo_MedioPago = medioPago.Codigo_MedioPago
-join EXEL_ENTES.TipoMedioDePago tipoPago on medioPago.Tipo_Medio_Pago_Codigo = tipoPago.Tipo_Medio_Pago_Codigo
-JOIN [EXEL_ENTES].[BI_TipoMedioPago] bi_mp ON tipoPago.Tipo_Medio_Pago_Codigo = bi_mp.bi_tipoMedioPago_Codigo
-join EXEL_ENTES.Producto producto on publi.Codigo_Publicacion = producto.Codigo_Publicacion
-join EXEL_ENTES.Subrubro subrubro on producto.Codigo_Subrubro = subrubro.Codigo_Subrubro
-join EXEL_ENTES.Rubro rubro on rubro.Codigo_Rubro = subrubro.Codigo_Rubro
-JOIN [EXEL_ENTES].[BI_RubroSubrubro] bi_rubrosubrubro ON rubro.Descripcion = bi_rubrosubrubro.rubro and subrubro.Descripcion = bi_rubrosubrubro.subrubro
-GROUP BY 
-    bi_ubi.bi_ubi_codigo, 
-    bi_tiempo.bi_tiempo_codigo, 
-    bi_re.bi_rango_etario_codigo, 
-    bi_mp.bi_tipoMedioPago_Codigo, 
-    bi_rubrosubrubro.bi_rubro_subrubro_codigo
+join EXEL_ENTES.BI_RangoHorario rango_horario on
+	rango_horario.rango = EXEL_ENTES.getHorario(venta.Fecha_Venta)
+GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, pago.Codigo_MedioPago,
+		 rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id 
 
  ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
-
 
 /* Carga de Hecho BI_Hecho_Compra */
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Compra] (
