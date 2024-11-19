@@ -84,6 +84,12 @@ GO
 
 /* ------- FIN DE FUNCIONES AUXILIARES ------- */
 
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Facturacion')
+DROP TABLE [EXEL_ENTES].BI_Hecho_Facturacion
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Envio')
+DROP TABLE [EXEL_ENTES].BI_Hecho_Envio
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Publicacion')
+DROP TABLE [EXEL_ENTES].BI_Hecho_Publicacion
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Envio')
 DROP TABLE [EXEL_ENTES].BI_Hecho_Envio
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Compra')
@@ -102,9 +108,12 @@ IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Rango_Etario')
 DROP TABLE [EXEL_ENTES].BI_Rango_Etario
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Ubicacion')
 DROP TABLE [EXEL_ENTES].BI_Ubicacion
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Hecho_Stock')
+DROP TABLE [EXEL_ENTES].BI_Hecho_Stock
+IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Marca')
+DROP TABLE [EXEL_ENTES].BI_Marca
 IF EXISTS (SELECT name FROM sys.tables WHERE name = 'BI_Tiempo')
 DROP TABLE [EXEL_ENTES].BI_Tiempo
-
 
 /* ------- INICIO DE CREACION DE LAS DIMENSIONES ------- */
 -- Tabla de dimension Tiempo
@@ -161,7 +170,7 @@ CREATE TABLE [EXEL_ENTES].BI_RubroSubrubro (
 
 -- Tabla de Dimension Marca necesaria para vista 2
 CREATE TABLE [EXEL_ENTES].[BI_Marca] (
-    bi_marca_codigo INT IDENTITY(1,1) NOT NULL,
+    bi_marca_codigo INT NOT NULL,
     descripcion NVARCHAR(50),
     CONSTRAINT [PK_BI_Marca] PRIMARY KEY (bi_marca_codigo)
 );
@@ -313,9 +322,9 @@ INSERT INTO EXEL_ENTES.BI_TipoEnvio (bi_tipo_envio_codigo, bi_tipo_envio_descrip
 SELECT DISTINCT tipo.Codigo_TipoEnvio, tipo.Descripcion
 FROM EXEL_ENTES.TipoEnvio tipo
 
--- Carga de dimension Marca SIN REVISAR
-INSERT INTO [EXEL_ENTES].[BI_Marca] (descripcion)
-SELECT DISTINCT Descripcion
+-- Carga de dimension Marca
+INSERT INTO [EXEL_ENTES].[BI_Marca] (bi_marca_codigo,descripcion)
+SELECT DISTINCT Marca.Codigo_Marca, Marca.Descripcion
 FROM [EXEL_ENTES].Marca;
 
 
@@ -422,18 +431,20 @@ INSERT INTO [EXEL_ENTES].[BI_Hecho_Publicacion] (
 SELECT
     tiempo.bi_tiempo_codigo,
     rubroSubrubro.bi_rubro_subrubro_codigo,
+	tiempo.bi_tiempo_cuatri,
     AVG(DATEDIFF(DAY, pub.fecha_inicio, pub.fecha_fin)) AS tiempo_vigencia
 FROM 
     [EXEL_ENTES].Publicacion pub
 JOIN 
+    [EXEL_ENTES].Producto producto ON pub.Codigo_Publicacion = producto.Codigo_Publicacion
+left JOIN 
     [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(pub.fecha_inicio) = tiempo.bi_tiempo_anio AND MONTH(pub.fecha_inicio) = tiempo.bi_tiempo_mes
-JOIN 
-    [EXEL_ENTES].Producto producto ON pub.codigo_producto = producto.codigo
-JOIN 
-    [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON producto.codigo_rubro = rubroSubrubro.rubro AND producto.codigo_subrubro = rubroSubrubro.subrubro
+left JOIN 
+    [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro on producto.Codigo_Subrubro = rubroSubrubro.subrubro
 GROUP BY 
     tiempo.bi_tiempo_codigo,
-    rubroSubrubro.bi_rubro_subrubro_codigo;
+    rubroSubrubro.bi_rubro_subrubro_codigo,
+	bi_tiempo_cuatri;
 GO
 
 -- HECHO STOCK RELACIONADO CON VISTA 2
@@ -445,14 +456,16 @@ INSERT INTO [EXEL_ENTES].[BI_Hecho_Stock] (
 SELECT
     tiempo.bi_tiempo_codigo,
     marca.bi_marca_codigo,
-    AVG(stock.cantidad_inicial) AS stock_inicial_promedio
+    round(AVG(pub.Stock),3) AS stock_inicial_promedio -- despues chequear si dejamos con decimales o enteros
 FROM 
-    [EXEL_ENTES].Stock stock
+    [EXEL_ENTES].Publicacion pub
+join 
+	EXEL_ENTES.Producto prod on prod.Codigo_Publicacion = pub.Codigo_Publicacion
 JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(stock.fecha_inicio) = tiempo.bi_tiempo_anio AND MONTH(stock.fecha_inicio) = tiempo.bi_tiempo_mes
-JOIN 
-    [EXEL_ENTES].Marca m ON stock.codigo_marca = m.Codigo_Marca
-JOIN 
+    [EXEL_ENTES].Marca m ON prod.Codigo_Marca = m.Codigo_Marca
+left JOIN 
+    [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(pub.fecha_inicio) = tiempo.bi_tiempo_anio AND MONTH(pub.fecha_inicio) = tiempo.bi_tiempo_mes
+left JOIN 
     [EXEL_ENTES].[BI_Marca] marca ON m.Descripcion = marca.descripcion
 GROUP BY 
     tiempo.bi_tiempo_codigo,
@@ -466,13 +479,19 @@ INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
 )
 SELECT
     tiempo.bi_tiempo_codigo,
-    SUM(factura.fact_total) AS total_facturado
+	ubicacion.bi_ubi_codigo,
+    SUM(factura.Total) AS total_facturado
 FROM 
     [EXEL_ENTES].Factura factura
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(factura.fact_fecha) = tiempo.bi_tiempo_anio AND MONTH(factura.fact_fecha) = tiempo.bi_tiempo_mes
+join
+	EXEL_ENTES.Usuario usuario on usuario.Codigo_Usuario = factura.Codigo_Vendedor
+left JOIN 
+    [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(factura.Fecha_Factura) = tiempo.bi_tiempo_anio AND MONTH(factura.Fecha_Factura) = tiempo.bi_tiempo_mes
+left join 
+	EXEL_ENTES.BI_Ubicacion ubicacion on usuario.Domicilio_Provincia = ubicacion.bi_ubi_provincia
 GROUP BY 
-    tiempo.bi_tiempo_codigo;
+    tiempo.bi_tiempo_codigo,
+	ubicacion.bi_ubi_codigo
 GO
 
 
