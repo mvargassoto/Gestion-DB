@@ -178,7 +178,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Marca] (
 
 /* ------- INICIO DE CREACION DE LOS HECHOS------- */
 
-CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
+/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion INT NOT NULL,
     codigo_tiempo INT NOT NULL,
     codigo_rango_etario_cliente INT NOT NULL,
@@ -194,7 +194,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Rango_Etario] FOREIGN KEY (codigo_rango_etario_cliente) REFERENCES [EXEL_ENTES].[BI_Rango_Etario](bi_rango_etario_codigo),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Medio_Pago] FOREIGN KEY (codigo_medio_pago) REFERENCES [EXEL_ENTES].[BI_TipoMedioPago](bi_tipoMedioPago_Codigo),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_RubroSubrubro] FOREIGN KEY (codigo_rubrosubrubro) REFERENCES [EXEL_ENTES].[BI_RubroSubrubro](bi_rubro_subrubro_codigo)
-);
+);*/
 
 /* 
 NO SE UTILIZA PARA NINGUNA VISTA
@@ -231,7 +231,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Stock] (
 );
 
 
-CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
+/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo INT NOT NULL,
     codigo_ubicacion_cliente INT NOT NULL,
     cantidad_envios INT NOT NULL,
@@ -240,15 +240,15 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
     CONSTRAINT [PK_BI_Hecho_Envio] PRIMARY KEY (codigo_tiempo, codigo_ubicacion_cliente), /* saque codigo_sucursal*/
     CONSTRAINT [FK_BI_Hecho_Envio_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
     CONSTRAINT [FK_BI_Hecho_Envio_BI_Ubicacion] FOREIGN KEY (codigo_ubicacion_cliente) REFERENCES [EXEL_ENTES].[BI_Ubicacion](bi_ubi_codigo)
-);
+);*/
 
 -- NECESARIO PARA VISTA 9
-CREATE TABLE [EXEL_ENTES].[BI_Hecho_Facturacion] (
+/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Facturacion] (
     codigo_tiempo INT NOT NULL,
     total_facturado DECIMAL(18, 2) NOT NULL,
     CONSTRAINT [PK_BI_Hecho_Facturacion] PRIMARY KEY (codigo_tiempo),
     CONSTRAINT [FK_BI_Hecho_Facturacion_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
-);
+);*/
 
 
 /* ------- FIN DE CREACION DE HECHOS ------- */
@@ -332,9 +332,9 @@ FROM [EXEL_ENTES].Marca;
 
 /* ------- INICIO DE CARGA DE LOS HECHOS ------- */
 
- ------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- /
+ ------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
-INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
+/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion,
     codigo_tiempo,
     codigo_rango_etario_cliente,
@@ -370,7 +370,7 @@ LEFT JOIN [EXEL_ENTES].BI_Ubicacion ubicacion ON ubicacion.bi_ubi_localidad = us
 LEFT JOIN [EXEL_ENTES].BI_Tiempo tiempo ON tiempo.bi_tiempo_anio = YEAR(venta.Fecha_Venta) AND tiempo.bi_tiempo_cuatri = EXEL_ENTES.getCuatrimestre(venta.Fecha_Venta) AND tiempo.bi_tiempo_mes = MONTH(venta.Fecha_Venta)
 LEFT JOIN [EXEL_ENTES].BI_Rango_Etario rango_etario ON rango_etario.bi_rango_etario_desc = EXEL_ENTES.getRangoEtario(cliente.Cliente_Fecha_Nac)
 GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, pago.Codigo_MedioPago, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id;
-
+*/
  ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
 /* Carga de Hecho BI_Hecho_Compra 
@@ -398,7 +398,7 @@ GO */
 
 
 /* Carga de Hecho BI_Hecho_Envio */
-INSERT INTO [EXEL_ENTES].[BI_Hecho_Envio] (
+/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo,
     codigo_ubicacion_cliente,
     cantidad_envios,
@@ -413,14 +413,14 @@ SELECT
     SUM(e.Costo_Envio) AS costo_total_envios
 FROM [EXEL_ENTES].Envio e
 JOIN [EXEL_ENTES].Venta v ON e.Nro_Venta = v.Numero_Venta
-JOIN [EXEL_ENTES].Usuario u ON u.Codigo_Usuario = v.Codigo_Cliente  /* saque el join con cliente xq direcramente lo hago con venta*/
+JOIN [EXEL_ENTES].Usuario u ON u.Codigo_Usuario = v.Codigo_Cliente  -- saque el join con cliente xq direcramente lo hago con venta
 LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(e.fecha_programada) = tiempo.bi_tiempo_anio AND MONTH(e.fecha_programada) = tiempo.bi_tiempo_mes
 LEFT JOIN [EXEL_ENTES].BI_Ubicacion ubicacion ON ubicacion.bi_ubi_localidad = u.Domicilio_Localidad AND ubicacion.bi_ubi_provincia = u.Domicilio_Provincia
 GROUP BY 
     tiempo.bi_tiempo_codigo,
     ubicacion.bi_ubi_codigo;
 GO
-
+*/
 
 -- HECHO_PUBLICACION SE RELACIONA CON VISTA 1 Y 2
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Publicacion] (
@@ -471,8 +471,9 @@ GROUP BY
     marca.bi_marca_codigo;
 GO
 
+
 -- HECHO FACT PARA VISTA 9
-INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
+/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
     codigo_tiempo,
     total_facturado
 )
@@ -492,11 +493,16 @@ GROUP BY
     tiempo.bi_tiempo_codigo,
 	ubicacion.bi_ubi_codigo
 GO
-
-
-
+*/
 
 /* ------- FIN DE CARGA DE LOS HECHOS ------- */
+
+
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_tiempo_promedio_publicaciones')
+DROP VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_promedio_stock_inicial')
+DROP VIEW [EXEL_ENTES].BI_promedio_stock_inicial
+GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
 
@@ -506,7 +512,8 @@ SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
     rubroSubrubro.subrubro,
-    publicacion.tiempo_vigencia
+    publicacion.tiempo_vigencia -- cambie la de abajo por esta SOFI
+	--  AVG(publicacion.tiempo_vigencia) AS promedio_tiempo_vigencia  --esta la saque xq estaba de mas el calculo CREO  SOFI
 FROM 
     [EXEL_ENTES].[BI_Hecho_Publicacion] publicacion
 JOIN 
@@ -516,8 +523,10 @@ JOIN
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
-    rubroSubrubro.subrubro;
+    rubroSubrubro.subrubro,
+	publicacion.tiempo_vigencia;
 GO
+-- select * from [EXEL_ENTES].BI_tiempo_promedio_publicaciones
 
 
 -- 2. Promedio de Stock Inicial
@@ -525,7 +534,8 @@ CREATE VIEW [EXEL_ENTES].BI_promedio_stock_inicial AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
     marca.descripcion AS nombre_marca,
-    AVG(stock.stock_inicial_promedio) AS promedio_stock_inicial
+	stock.stock_inicial_promedio -- cambie la de abajo por esta SOFI
+    --AVG(stock.stock_inicial_promedio) AS promedio_stock_inicial  --esta la saque xq estaba de mas el calculo CREO  SOFI
 FROM 
     [EXEL_ENTES].[BI_Hecho_Stock] stock
 JOIN 
@@ -534,13 +544,14 @@ JOIN
     [EXEL_ENTES].[BI_Marca] marca ON stock.codigo_marca = marca.bi_marca_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
-    marca.descripcion;
+    marca.descripcion,
+	stock.stock_inicial_promedio;
 GO
-
+-- select * from [EXEL_ENTES].BI_promedio_stock_inicial
 
 
 -- 3. Venta promedio mensual -- CAMBIADA POR HECHO VENTA
-CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
+/*CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
 SELECT
     bi_u.bi_ubi_provincia AS provincia,
     bi_t.bi_tiempo_anio AS anio,
@@ -556,9 +567,10 @@ GROUP BY
     bi_u.bi_ubi_provincia, 
     bi_t.bi_tiempo_anio, 
     bi_t.bi_tiempo_mes;
-GO
+GO*/
+-- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
-
+/* -- abro vistas todavia no vistas
 -- 4. Rendimiento de rubros
 CREATE VIEW [EXEL_ENTES].BI_rendimiento_rubros AS
 SELECT
@@ -716,5 +728,9 @@ ORDER BY
     ubicacion.bi_ubi_provincia;
 GO
 
-
+*/ --cierro vistas todavia no vistas
 /* ------- FIN DE CREACION DE VISTAS ------- */
+
+
+
+-- hay q dropear las vistas
