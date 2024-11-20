@@ -396,6 +396,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_usuario
+
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -410,6 +412,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_cliente
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -423,6 +426,8 @@ BEGIN
 	where maes.VENDEDOR_RAZON_SOCIAL is not null
 END
 GO
+
+--exec EXEL_ENTES.migrar_vendedor
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -439,6 +444,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_publicacion
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -450,6 +456,9 @@ BEGIN
     FROM gd_esquema.Maestra
 END
 GO
+
+--exec EXEL_ENTES.migrar_rubro
+
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -467,6 +476,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_subrubro
+
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -478,6 +489,8 @@ BEGIN
     FROM gd_esquema.Maestra
 END
 GO
+
+--exec EXEL_ENTES.migrar_marca
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -491,6 +504,8 @@ BEGIN
 	WHERE PRODUCTO_MOD_CODIGO is not null
 END
 GO
+
+--exec EXEL_ENTES.migrar_modelo
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -510,6 +525,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_producto
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -528,6 +544,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_venta
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -555,18 +572,38 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_factura
+
+------------------------------------------------------------------------------------------------------------------------------
+
+GO
+CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago
+AS
+BEGIN
+    INSERT INTO [EXEL_ENTES].[TipoMedioDePago] (Descripcion_tipo_medio_de_pago)
+    SELECT DISTINCT PAGO_TIPO_MEDIO_PAGO
+    FROM gd_esquema.Maestra
+    WHERE PAGO_TIPO_MEDIO_PAGO IS NOT NULL
+END
+GO
+
+--exec EXEL_ENTES.migrar_tipo_medio_pago
+
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
 CREATE PROCEDURE [EXEL_ENTES].migrar_medio_pago
 AS
 BEGIN
-    INSERT INTO [EXEL_ENTES].[MedioDePago] (Descripcion_medio_pago)
-    SELECT DISTINCT PAGO_MEDIO_PAGO
-    FROM gd_esquema.Maestra
+    INSERT INTO [EXEL_ENTES].[MedioDePago] (Descripcion_medio_pago, Tipo_Medio_Pago_Codigo)
+    SELECT DISTINCT PAGO_MEDIO_PAGO, tipoMedioPago.Tipo_Medio_Pago_Codigo
+    FROM gd_esquema.Maestra maes
+	join EXEL_ENTES.TipoMedioDePago tipoMedioPago on
+		maes.PAGO_TIPO_MEDIO_PAGO = tipoMedioPago.Descripcion_tipo_medio_de_pago
 END
 GO
 
+--exec EXEL_ENTES.migrar_medio_pago
 
 ------------------------------------------------------------------------------------------------------------------------------
 
@@ -588,6 +625,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_pago
+
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -602,7 +641,7 @@ BEGIN
 END
 GO
 
-
+--exec EXEL_ENTES.migrar_provincia
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -618,6 +657,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_localidad
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -635,6 +675,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_almacen
+
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -647,6 +689,7 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_tipo_envio
 ------------------------------------------------------------------------------------------------------------------------------
 
 GO
@@ -664,18 +707,7 @@ BEGIN
 END
 GO
 
-------------------------------------------------------------------------------------------------------------------------------
-
-GO
-CREATE PROCEDURE [EXEL_ENTES].migrar_tipo_medio_pago
-AS
-BEGIN
-    INSERT INTO [EXEL_ENTES].[TipoMedioDePago] (Descripcion_tipo_medio_de_pago)
-    SELECT DISTINCT PAGO_TIPO_MEDIO_PAGO
-    FROM gd_esquema.Maestra
-    WHERE PAGO_TIPO_MEDIO_PAGO IS NOT NULL
-END
-GO
+--exec EXEL_ENTES.migrar_envio
 
 -------------------------------------------------------------------------------------------------------
 
@@ -700,6 +732,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_detalle_venta
+
 -------------------------------------------------------------------------------------------------------
 
 GO
@@ -712,6 +746,8 @@ BEGIN
     WHERE FACTURA_DET_PRECIO IS NOT NULL
 END
 GO
+
+--exec EXEL_ENTES.migrar_detalle_factura
 
 -------------------------------------------------------------------------------------------------------
 
@@ -730,6 +766,8 @@ BEGIN
 END
 GO
 
+--exec EXEL_ENTES.migrar_detalle_pago
+
 /*--------------------------------FIN DE EJECUCION DE STORED PROCEDURES: MIGRACION------------------------- -------*/
 BEGIN TRANSACTION
 BEGIN TRY
@@ -745,6 +783,7 @@ BEGIN TRY
     EXECUTE [EXEL_ENTES].migrar_producto;
     EXECUTE [EXEL_ENTES].migrar_venta;
     EXECUTE [EXEL_ENTES].migrar_factura;
+    EXECUTE [EXEL_ENTES].migrar_tipo_medio_pago;
     EXECUTE [EXEL_ENTES].migrar_medio_pago;
     EXECUTE [EXEL_ENTES].migrar_pago;
     EXECUTE [EXEL_ENTES].migrar_provincia;
@@ -752,7 +791,6 @@ BEGIN TRY
     EXECUTE [EXEL_ENTES].migrar_almacen;
     EXECUTE [EXEL_ENTES].migrar_tipo_envio;
     EXECUTE [EXEL_ENTES].migrar_envio;
-    EXECUTE [EXEL_ENTES].migrar_tipo_medio_pago;
     EXECUTE [EXEL_ENTES].migrar_detalle_venta;
     EXECUTE [EXEL_ENTES].migrar_detalle_factura;
     EXECUTE [EXEL_ENTES].migrar_detalle_pago;

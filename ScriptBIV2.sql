@@ -178,7 +178,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Marca] (
 
 /* ------- INICIO DE CREACION DE LOS HECHOS------- */
 
-/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
+CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion INT NOT NULL,
     codigo_tiempo INT NOT NULL,
     codigo_rango_etario_cliente INT NOT NULL,
@@ -194,7 +194,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Marca] (
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Rango_Etario] FOREIGN KEY (codigo_rango_etario_cliente) REFERENCES [EXEL_ENTES].[BI_Rango_Etario](bi_rango_etario_codigo),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_Medio_Pago] FOREIGN KEY (codigo_medio_pago) REFERENCES [EXEL_ENTES].[BI_TipoMedioPago](bi_tipoMedioPago_Codigo),
     CONSTRAINT [FK_BI_Hecho_Venta_BI_RubroSubrubro] FOREIGN KEY (codigo_rubrosubrubro) REFERENCES [EXEL_ENTES].[BI_RubroSubrubro](bi_rubro_subrubro_codigo)
-);*/
+);
 
 /* 
 NO SE UTILIZA PARA NINGUNA VISTA
@@ -334,7 +334,7 @@ FROM [EXEL_ENTES].Marca;
 
  ------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
-/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
+INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion,
     codigo_tiempo,
     codigo_rango_etario_cliente,
@@ -349,7 +349,7 @@ SELECT
     ubicacion.bi_ubi_codigo,
     tiempo.bi_tiempo_codigo,
     rango_etario.bi_rango_etario_codigo,
-    pago.Codigo_MedioPago,
+    bi_tipoMedioPago.bi_tipoMedioPago_Codigo,
     rubroSubrubro.bi_rubro_subrubro_codigo,
     rango_horario.rango_horario_id,
     COUNT(DISTINCT venta.Numero_Venta) AS cantidad_ventas,
@@ -359,6 +359,8 @@ FROM [EXEL_ENTES].Venta venta
 JOIN [EXEL_ENTES].Cliente cliente ON venta.Codigo_Cliente = cliente.Codigo_Usuario
 JOIN [EXEL_ENTES].Usuario usuario ON usuario.Codigo_Usuario = cliente.Codigo_Usuario
 JOIN [EXEL_ENTES].Pago pago ON pago.Codigo_Numero_Venta = venta.Numero_Venta
+JOIN EXEL_ENTES.MedioDePago medioDePago on medioDePago.Codigo_MedioPago = pago.Codigo_MedioPago
+JOIN EXEL_ENTES.TipoMedioDePago tipoMedioPago on tipoMedioPago.Tipo_Medio_Pago_Codigo = medioDePago.Tipo_Medio_Pago_Codigo
 JOIN [EXEL_ENTES].Detalle_Venta detalle_venta ON detalle_venta.Numero_Venta = venta.Numero_Venta
 JOIN [EXEL_ENTES].Publicacion publicacion ON publicacion.Codigo_Publicacion = detalle_venta.Codigo_Publicacion
 JOIN EXEL_ENTES.Producto producto ON producto.Codigo_Publicacion = publicacion.Codigo_Publicacion
@@ -369,8 +371,13 @@ LEFT JOIN EXEL_ENTES.BI_RangoHorario rango_horario ON rango_horario.rango = EXEL
 LEFT JOIN [EXEL_ENTES].BI_Ubicacion ubicacion ON ubicacion.bi_ubi_localidad = usuario.Domicilio_Localidad AND ubicacion.bi_ubi_provincia = usuario.Domicilio_Provincia
 LEFT JOIN [EXEL_ENTES].BI_Tiempo tiempo ON tiempo.bi_tiempo_anio = YEAR(venta.Fecha_Venta) AND tiempo.bi_tiempo_cuatri = EXEL_ENTES.getCuatrimestre(venta.Fecha_Venta) AND tiempo.bi_tiempo_mes = MONTH(venta.Fecha_Venta)
 LEFT JOIN [EXEL_ENTES].BI_Rango_Etario rango_etario ON rango_etario.bi_rango_etario_desc = EXEL_ENTES.getRangoEtario(cliente.Cliente_Fecha_Nac)
-GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, pago.Codigo_MedioPago, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id;
-*/
+LEFT JOIN EXEL_ENTES.BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_tipoMedioPago_Codigo = tipoMedioPago.Tipo_Medio_Pago_Codigo
+GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id, bi_tipoMedioPago.bi_tipoMedioPago_Codigo
+
+
+select * from EXEL_ENTES.BI_Hecho_Venta
+
+
  ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
 /* Carga de Hecho BI_Hecho_Compra 
@@ -512,8 +519,8 @@ SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
     rubroSubrubro.subrubro,
-    publicacion.tiempo_vigencia -- cambie la de abajo por esta SOFI
-	--  AVG(publicacion.tiempo_vigencia) AS promedio_tiempo_vigencia  --esta la saque xq estaba de mas el calculo CREO  SOFI
+    publicacion.tiempo_vigencia
+
 FROM 
     [EXEL_ENTES].[BI_Hecho_Publicacion] publicacion
 JOIN 
@@ -534,8 +541,7 @@ CREATE VIEW [EXEL_ENTES].BI_promedio_stock_inicial AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
     marca.descripcion AS nombre_marca,
-	stock.stock_inicial_promedio -- cambie la de abajo por esta SOFI
-    --AVG(stock.stock_inicial_promedio) AS promedio_stock_inicial  --esta la saque xq estaba de mas el calculo CREO  SOFI
+	stock.stock_inicial_promedio 
 FROM 
     [EXEL_ENTES].[BI_Hecho_Stock] stock
 JOIN 
@@ -551,7 +557,7 @@ GO
 
 
 -- 3. Venta promedio mensual -- CAMBIADA POR HECHO VENTA
-/*CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
+CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
 SELECT
     bi_u.bi_ubi_provincia AS provincia,
     bi_t.bi_tiempo_anio AS anio,
@@ -567,7 +573,7 @@ GROUP BY
     bi_u.bi_ubi_provincia, 
     bi_t.bi_tiempo_anio, 
     bi_t.bi_tiempo_mes;
-GO*/
+GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
 /* -- abro vistas todavia no vistas
