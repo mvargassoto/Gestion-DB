@@ -509,6 +509,8 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_tiempo_promedio_publicaci
 DROP VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_promedio_stock_inicial')
 DROP VIEW [EXEL_ENTES].BI_promedio_stock_inicial
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_venta_promedio_mensual')
+DROP VIEW [EXEL_ENTES].BI_venta_promedio_mensual
 GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
