@@ -76,7 +76,7 @@ BEGIN
 			WHEN @hora >= 60000 AND @hora < 120000 THEN '06:00 - 12:00'
 			WHEN @hora >= 120000 AND @hora < 180000 THEN '12:00 - 18:00'
 			WHEN @hora >= 180000 AND @hora < 240000 THEN '18:00 - 24:00'
-		END
+		END 
 
 	RETURN @turno
 END
@@ -431,7 +431,6 @@ INSERT INTO [EXEL_ENTES].[BI_Hecho_Publicacion] (
 SELECT
     tiempo.bi_tiempo_codigo,
     rubroSubrubro.bi_rubro_subrubro_codigo,
-	tiempo.bi_tiempo_cuatri,
     AVG(DATEDIFF(DAY, pub.fecha_inicio, pub.fecha_fin)) AS tiempo_vigencia
 FROM 
     [EXEL_ENTES].Publicacion pub
@@ -506,9 +505,8 @@ CREATE VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
-    rubroSubrubro.rubro,
     rubroSubrubro.subrubro,
-    AVG(publicacion.tiempo_vigencia) AS promedio_tiempo_vigencia
+    publicacion.tiempo_vigencia
 FROM 
     [EXEL_ENTES].[BI_Hecho_Publicacion] publicacion
 JOIN 
@@ -518,7 +516,6 @@ JOIN
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
-    rubroSubrubro.rubro,
     rubroSubrubro.subrubro;
 GO
 
