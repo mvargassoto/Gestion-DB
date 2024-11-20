@@ -374,8 +374,86 @@ LEFT JOIN [EXEL_ENTES].BI_Rango_Etario rango_etario ON rango_etario.bi_rango_eta
 LEFT JOIN EXEL_ENTES.BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_tipoMedioPago_Codigo = tipoMedioPago.Tipo_Medio_Pago_Codigo
 GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id, bi_tipoMedioPago.bi_tipoMedioPago_Codigo
 
+go
+
+WITH Ventas_Cuatrimestre AS (
+    SELECT 
+        ubicacion.bi_ubi_codigo,
+        ubicacion.bi_ubi_localidad,
+        ubicacion.bi_ubi_provincia,
+        tiempo.bi_tiempo_anio,
+        tiempo.bi_tiempo_cuatri,
+        rango_etario.bi_rango_etario_desc,
+        rubroSubrubro.rubro,
+        SUM(hecho.cantidad_ventas) AS cantidad_ventas,
+        ROW_NUMBER() OVER(PARTITION BY ubicacion.bi_ubi_localidad, tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, rango_etario.bi_rango_etario_desc ORDER BY SUM(hecho.cantidad_ventas) DESC) AS rn
+    FROM 
+        [EXEL_ENTES].[BI_Hecho_Venta] hecho
+    JOIN 
+        [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hecho.codigo_ubicacion = ubicacion.bi_ubi_codigo
+    JOIN 
+        [EXEL_ENTES].[BI_Tiempo] tiempo ON hecho.codigo_tiempo = tiempo.bi_tiempo_codigo
+    JOIN 
+        [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON hecho.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
+    JOIN 
+        [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON hecho.codigo_rubrosubrubro = rubroSubrubro.bi_rubro_subrubro_codigo
+	where rubroSubrubro.rubro is not null
+    GROUP BY 
+        ubicacion.bi_ubi_codigo,
+        ubicacion.bi_ubi_localidad,
+        ubicacion.bi_ubi_provincia,
+        tiempo.bi_tiempo_anio,
+        tiempo.bi_tiempo_cuatri,
+        rango_etario.bi_rango_etario_desc,
+        rubroSubrubro.rubro
+)
+SELECT 
+    bi_ubi_localidad,
+    bi_ubi_provincia,
+    bi_tiempo_anio,
+    bi_tiempo_cuatri,
+    bi_rango_etario_desc,
+    rubro,
+    cantidad_ventas
+FROM 
+    Ventas_Cuatrimestre
+WHERE 
+    rn <= 5;
+
+
+
+WITH Ventas_Cuatrimestre AS (
+    SELECT 
+        tiempo.bi_tiempo_anio,
+        tiempo.bi_tiempo_cuatri,
+        hecho.codigo_rubrosubrubro,
+        SUM(hecho.cantidad_ventas) AS total_cantidad_ventas,
+        ROW_NUMBER() OVER(PARTITION BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri ORDER BY SUM(hecho.cantidad_ventas) DESC) AS rn
+    FROM 
+        [EXEL_ENTES].[BI_Hecho_Venta] hecho
+    JOIN 
+        [EXEL_ENTES].[BI_Tiempo] tiempo ON hecho.codigo_tiempo = tiempo.bi_tiempo_codigo
+    GROUP BY 
+        tiempo.bi_tiempo_anio,
+        tiempo.bi_tiempo_cuatri,
+        hecho.codigo_rubrosubrubro
+)
+SELECT 
+    bi_tiempo_anio,
+    bi_tiempo_cuatri,
+    codigo_rubrosubrubro,
+    total_cantidad_ventas
+FROM 
+    Ventas_Cuatrimestre
+WHERE 
+    rn <= 5;
+
+
+
 
 select * from EXEL_ENTES.BI_Hecho_Venta
+
+
 
 
  ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
@@ -509,8 +587,9 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_tiempo_promedio_publicaci
 DROP VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_promedio_stock_inicial')
 DROP VIEW [EXEL_ENTES].BI_promedio_stock_inicial
-IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_venta_promedio_mensual')
-DROP VIEW [EXEL_ENTES].BI_venta_promedio_mensual
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_rendimiento_rubros')
+DROP VIEW [EXEL_ENTES].BI_rendimiento_rubros
+
 GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
@@ -561,25 +640,21 @@ GO
 -- 3. Venta promedio mensual -- CAMBIADA POR HECHO VENTA
 CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
 SELECT
-    bi_u.bi_ubi_provincia AS provincia,
-    bi_t.bi_tiempo_anio AS anio,
-    bi_t.bi_tiempo_mes AS mes,
-    SUM(hv.sumatoria_importe) / NULLIF(COUNT(hv.cantidad_ventas), 0) AS venta_promedio
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Venta] hv
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] bi_u ON hv.codigo_ubicacion = bi_u.bi_ubi_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] bi_t ON hv.codigo_tiempo = bi_t.bi_tiempo_codigo
-GROUP BY 
-    bi_u.bi_ubi_provincia, 
-    bi_t.bi_tiempo_anio, 
-    bi_t.bi_tiempo_mes;
+	bi_tiempo.bi_tiempo_anio as [Anio],
+	bi_tiempo.bi_tiempo_mes as [Mes],
+	bi_ubi.bi_ubi_provincia as [Provincia],
+	isnull(isnull(sum(hv.sumatoria_importe),0)/hv.cantidad_ventas,0) as [Importe]
+FROM EXEL_ENTES.BI_Hecho_Venta hv
+JOIN EXEL_ENTES.BI_Ubicacion bi_ubi on
+	hv.codigo_ubicacion = bi_ubi_codigo
+JOIN EXEL_ENTES.BI_Tiempo bi_tiempo on
+	hv.codigo_tiempo = bi_tiempo.bi_tiempo_codigo
+GROUP BY bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia, hv.cantidad_ventas
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
-/* -- abro vistas todavia no vistas
 -- 4. Rendimiento de rubros
+
 CREATE VIEW [EXEL_ENTES].BI_rendimiento_rubros AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
@@ -610,7 +685,7 @@ ORDER BY
     total_ventas DESC
 OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
 GO
-
+/*
 
 -- 5. Volumen de ventas
 CREATE VIEW [EXEL_ENTES].BI_volumen_ventas AS
