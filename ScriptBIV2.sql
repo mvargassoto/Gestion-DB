@@ -374,7 +374,7 @@ LEFT JOIN [EXEL_ENTES].BI_Rango_Etario rango_etario ON rango_etario.bi_rango_eta
 LEFT JOIN EXEL_ENTES.BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_tipoMedioPago_Codigo = tipoMedioPago.Tipo_Medio_Pago_Codigo
 GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id, bi_tipoMedioPago.bi_tipoMedioPago_Codigo
 
-go
+GO
 
 WITH Ventas_Cuatrimestre AS (
     SELECT 
@@ -451,7 +451,7 @@ WHERE
 
 
 
-select * from EXEL_ENTES.BI_Hecho_Venta
+--select * from EXEL_ENTES.BI_Hecho_Venta
 
 
 
@@ -587,9 +587,12 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_tiempo_promedio_publicaci
 DROP VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_promedio_stock_inicial')
 DROP VIEW [EXEL_ENTES].BI_promedio_stock_inicial
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_venta_promedio_mensual')
+DROP VIEW [EXEL_ENTES].BI_venta_promedio_mensual
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_rendimiento_rubros')
 DROP VIEW [EXEL_ENTES].BI_rendimiento_rubros
-
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_pago_en_cuotas')
+DROP VIEW [EXEL_ENTES].BI_pago_en_cuotas
 GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
@@ -653,8 +656,8 @@ GROUP BY bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provin
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
+/*
 -- 4. Rendimiento de rubros
-
 CREATE VIEW [EXEL_ENTES].BI_rendimiento_rubros AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
@@ -685,7 +688,6 @@ ORDER BY
     total_ventas DESC
 OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
 GO
-/*
 
 -- 5. Volumen de ventas
 CREATE VIEW [EXEL_ENTES].BI_volumen_ventas AS
@@ -705,7 +707,7 @@ GROUP BY
     tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes;
 GO
-
+*/
 
 -- 6. Pago en cuotas
 CREATE VIEW [EXEL_ENTES].BI_pago_en_cuotas AS
@@ -714,17 +716,12 @@ SELECT TOP 3
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_mes AS mes,
     medio_pago.descripcion_tipo_medio_pago AS medio_pago,
-    SUM(hv.importe_cuotas) AS importe_total_cuotas
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Venta] hv
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hv.codigo_ubicacion = ubicacion.bi_ubi_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_TipoMedioPago] medio_pago ON hv.codigo_medio_pago = medio_pago.bi_tipoMedioPago_Codigo
-WHERE 
-    hv.importe_cuotas > 0
+	MAX(hv.sumatoria_importe) AS importe_total_cuotas
+    --SUM(hv.importe_cuotas) AS importe_total_cuotas
+FROM [EXEL_ENTES].[BI_Hecho_Venta] hv
+	JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hv.codigo_ubicacion = ubicacion.bi_ubi_codigo
+	JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
+	JOIN [EXEL_ENTES].[BI_TipoMedioPago] medio_pago ON hv.codigo_medio_pago = medio_pago.bi_tipoMedioPago_Codigo
 GROUP BY 
     ubicacion.bi_ubi_localidad, 
     tiempo.bi_tiempo_anio, 
@@ -733,8 +730,9 @@ GROUP BY
 ORDER BY 
     importe_total_cuotas DESC;
 GO
+-- select * from [EXEL_ENTES].BI_pago_en_cuotas
 
-
+/*	
 -- 7. Porcentaje de cumplimiento de envíos en tiempos programados
 CREATE VIEW [EXEL_ENTES].BI_porcentaje_cumplimiento_envios AS
 SELECT
