@@ -231,7 +231,7 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Stock] (
 );
 
 
-/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
+CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo INT NOT NULL,
     codigo_ubicacion_cliente INT NOT NULL,
     cantidad_envios INT NOT NULL,
@@ -240,15 +240,17 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Stock] (
     CONSTRAINT [PK_BI_Hecho_Envio] PRIMARY KEY (codigo_tiempo, codigo_ubicacion_cliente), /* saque codigo_sucursal*/
     CONSTRAINT [FK_BI_Hecho_Envio_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
     CONSTRAINT [FK_BI_Hecho_Envio_BI_Ubicacion] FOREIGN KEY (codigo_ubicacion_cliente) REFERENCES [EXEL_ENTES].[BI_Ubicacion](bi_ubi_codigo)
-);*/
+);
 
 -- NECESARIO PARA VISTA 9
-/*CREATE TABLE [EXEL_ENTES].[BI_Hecho_Facturacion] (
+CREATE TABLE [EXEL_ENTES].[BI_Hecho_Facturacion] (
     codigo_tiempo INT NOT NULL,
+	codigo_ubicacion INT NOT NULL,
     total_facturado DECIMAL(18, 2) NOT NULL,
-    CONSTRAINT [PK_BI_Hecho_Facturacion] PRIMARY KEY (codigo_tiempo),
+    CONSTRAINT [PK_BI_Hecho_Facturacion] PRIMARY KEY (codigo_tiempo, codigo_ubicacion),
     CONSTRAINT [FK_BI_Hecho_Facturacion_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
-);*/
+	CONSTRAINT [FK_BI_Hecho_Facturacion_BI_Ubicacion] FOREIGN KEY (codigo_ubicacion) REFERENCES [EXEL_ENTES].[BI_Ubicacion](bi_ubi_codigo),
+);
 
 
 /* ------- FIN DE CREACION DE HECHOS ------- */
@@ -359,23 +361,25 @@ FROM [EXEL_ENTES].Venta venta
 JOIN [EXEL_ENTES].Cliente cliente ON venta.Codigo_Cliente = cliente.Codigo_Usuario
 JOIN [EXEL_ENTES].Usuario usuario ON usuario.Codigo_Usuario = cliente.Codigo_Usuario
 JOIN [EXEL_ENTES].Pago pago ON pago.Codigo_Numero_Venta = venta.Numero_Venta
-JOIN EXEL_ENTES.MedioDePago medioDePago on medioDePago.Codigo_MedioPago = pago.Codigo_MedioPago
-JOIN EXEL_ENTES.TipoMedioDePago tipoMedioPago on tipoMedioPago.Tipo_Medio_Pago_Codigo = medioDePago.Tipo_Medio_Pago_Codigo
+JOIN [EXEL_ENTES].MedioDePago medioDePago on medioDePago.Codigo_MedioPago = pago.Codigo_MedioPago
+JOIN [EXEL_ENTES].TipoMedioDePago tipoMedioPago on tipoMedioPago.Tipo_Medio_Pago_Codigo = medioDePago.Tipo_Medio_Pago_Codigo
 JOIN [EXEL_ENTES].Detalle_Venta detalle_venta ON detalle_venta.Numero_Venta = venta.Numero_Venta
 JOIN [EXEL_ENTES].Publicacion publicacion ON publicacion.Codigo_Publicacion = detalle_venta.Codigo_Publicacion
-JOIN EXEL_ENTES.Producto producto ON producto.Codigo_Publicacion = publicacion.Codigo_Publicacion
-JOIN EXEL_ENTES.Subrubro subrubro ON subrubro.Codigo_Subrubro = producto.Codigo_Subrubro
-LEFT JOIN EXEL_ENTES.Rubro rubro ON rubro.Codigo_Rubro = subrubro.Codigo_Subrubro
-LEFT JOIN EXEL_ENTES.BI_RubroSubrubro rubroSubrubro ON subrubro.Codigo_Subrubro = rubroSubrubro.subrubro
-LEFT JOIN EXEL_ENTES.BI_RangoHorario rango_horario ON rango_horario.rango = EXEL_ENTES.getHorario(venta.Fecha_Venta)
+JOIN [EXEL_ENTES].Producto producto ON producto.Codigo_Publicacion = publicacion.Codigo_Publicacion
+JOIN [EXEL_ENTES].Subrubro subrubro ON subrubro.Codigo_Subrubro = producto.Codigo_Subrubro
+-- LEFT JOIN EXEL_ENTES.Rubro rubro ON rubro.Codigo_Rubro = subrubro.Codigo_Subrubro
+LEFT JOIN [EXEL_ENTES].BI_RubroSubrubro rubroSubrubro ON subrubro.Codigo_Subrubro = rubroSubrubro.subrubro
+LEFT JOIN [EXEL_ENTES].BI_RangoHorario rango_horario ON rango_horario.rango = EXEL_ENTES.getHorario(venta.Fecha_Venta)
 LEFT JOIN [EXEL_ENTES].BI_Ubicacion ubicacion ON ubicacion.bi_ubi_localidad = usuario.Domicilio_Localidad AND ubicacion.bi_ubi_provincia = usuario.Domicilio_Provincia
 LEFT JOIN [EXEL_ENTES].BI_Tiempo tiempo ON tiempo.bi_tiempo_anio = YEAR(venta.Fecha_Venta) AND tiempo.bi_tiempo_cuatri = EXEL_ENTES.getCuatrimestre(venta.Fecha_Venta) AND tiempo.bi_tiempo_mes = MONTH(venta.Fecha_Venta)
 LEFT JOIN [EXEL_ENTES].BI_Rango_Etario rango_etario ON rango_etario.bi_rango_etario_desc = EXEL_ENTES.getRangoEtario(cliente.Cliente_Fecha_Nac)
-LEFT JOIN EXEL_ENTES.BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_tipoMedioPago_Codigo = tipoMedioPago.Tipo_Medio_Pago_Codigo
+LEFT JOIN [EXEL_ENTES].BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_tipoMedioPago_Codigo = tipoMedioPago.Tipo_Medio_Pago_Codigo
 GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id, bi_tipoMedioPago.bi_tipoMedioPago_Codigo
 
 GO
 
+select * from [EXEL_ENTES].[BI_Hecho_Venta]
+/*
 WITH Ventas_Cuatrimestre AS (
     SELECT 
         ubicacion.bi_ubi_codigo,
@@ -447,7 +451,7 @@ FROM
     Ventas_Cuatrimestre
 WHERE 
     rn <= 5;
-
+*/
 
 
 
@@ -483,18 +487,18 @@ GO */
 
 
 /* Carga de Hecho BI_Hecho_Envio */
-/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Envio] (
+INSERT INTO [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo,
     codigo_ubicacion_cliente,
-    cantidad_envios,
     envios_cumplidos,
+	cantidad_envios,
     costo_total_envios
 )
-SELECT 
+SELECT distinct
     tiempo.bi_tiempo_codigo,
     ubicacion.bi_ubi_codigo,
-    COUNT(*) AS cantidad_envios,
-    COUNT(CASE WHEN DATEDIFF(DAY, e.fecha_entrega, e.fecha_programada) = 0 THEN 1 ELSE NULL END) AS envios_cumplidos,
+    SUM(CASE WHEN DATEDIFF(DAY, e.fecha_entrega, e.fecha_programada) = 0 THEN 1 ELSE NULL END) AS envios_cumplidos,
+	COUNT(distinct e.Nro_Envio) AS cantidad_envios,
     SUM(e.Costo_Envio) AS costo_total_envios
 FROM [EXEL_ENTES].Envio e
 JOIN [EXEL_ENTES].Venta v ON e.Nro_Venta = v.Numero_Venta
@@ -505,7 +509,7 @@ GROUP BY
     tiempo.bi_tiempo_codigo,
     ubicacion.bi_ubi_codigo;
 GO
-*/
+
 
 -- HECHO_PUBLICACION SE RELACIONA CON VISTA 1 Y 2
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Publicacion] (
@@ -558,27 +562,24 @@ GO
 
 
 -- HECHO FACT PARA VISTA 9
-/*INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
+INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
     codigo_tiempo,
+	codigo_ubicacion,
     total_facturado
 )
 SELECT
     tiempo.bi_tiempo_codigo,
 	ubicacion.bi_ubi_codigo,
     SUM(factura.Total) AS total_facturado
-FROM 
-    [EXEL_ENTES].Factura factura
-join
-	EXEL_ENTES.Usuario usuario on usuario.Codigo_Usuario = factura.Codigo_Vendedor
-left JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(factura.Fecha_Factura) = tiempo.bi_tiempo_anio AND MONTH(factura.Fecha_Factura) = tiempo.bi_tiempo_mes
-left join 
-	EXEL_ENTES.BI_Ubicacion ubicacion on usuario.Domicilio_Provincia = ubicacion.bi_ubi_provincia
+FROM [EXEL_ENTES].Factura factura
+join EXEL_ENTES.Usuario usuario on usuario.Codigo_Usuario = factura.Codigo_Vendedor
+left JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(factura.Fecha_Factura) = tiempo.bi_tiempo_anio AND MONTH(factura.Fecha_Factura) = tiempo.bi_tiempo_mes
+left join EXEL_ENTES.BI_Ubicacion ubicacion on usuario.Domicilio_Provincia = ubicacion.bi_ubi_provincia
 GROUP BY 
     tiempo.bi_tiempo_codigo,
 	ubicacion.bi_ubi_codigo
 GO
-*/
+
 
 /* ------- FIN DE CARGA DE LOS HECHOS ------- */
 
@@ -593,6 +594,12 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_rendimiento_rubros')
 DROP VIEW [EXEL_ENTES].BI_rendimiento_rubros
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_pago_en_cuotas')
 DROP VIEW [EXEL_ENTES].BI_pago_en_cuotas
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_porcentaje_cumplimiento_envios')
+DROP VIEW [EXEL_ENTES].BI_porcentaje_cumplimiento_envios
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_localidades_mayor_costo_envio')
+DROP VIEW [EXEL_ENTES].BI_localidades_mayor_costo_envio
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_porcentaje_facturacion_mensual')
+DROP VIEW [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
@@ -605,12 +612,9 @@ SELECT
     rubroSubrubro.subrubro,
     publicacion.tiempo_vigencia
 
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Publicacion] publicacion
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON publicacion.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON publicacion.codigo_rubro_subrubro = rubroSubrubro.bi_rubro_subrubro_codigo
+FROM [EXEL_ENTES].[BI_Hecho_Publicacion] publicacion
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON publicacion.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON publicacion.codigo_rubro_subrubro = rubroSubrubro.bi_rubro_subrubro_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
@@ -626,12 +630,9 @@ SELECT
     tiempo.bi_tiempo_anio AS anio,
     marca.descripcion AS nombre_marca,
 	stock.stock_inicial_promedio 
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Stock] stock
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON stock.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Marca] marca ON stock.codigo_marca = marca.bi_marca_codigo
+FROM [EXEL_ENTES].[BI_Hecho_Stock] stock
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON stock.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Marca] marca ON stock.codigo_marca = marca.bi_marca_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     marca.descripcion,
@@ -648,23 +649,21 @@ SELECT
 	bi_ubi.bi_ubi_provincia as [Provincia],
 	isnull(isnull(sum(hv.sumatoria_importe),0)/hv.cantidad_ventas,0) as [Importe]
 FROM EXEL_ENTES.BI_Hecho_Venta hv
-JOIN EXEL_ENTES.BI_Ubicacion bi_ubi on
-	hv.codigo_ubicacion = bi_ubi_codigo
-JOIN EXEL_ENTES.BI_Tiempo bi_tiempo on
-	hv.codigo_tiempo = bi_tiempo.bi_tiempo_codigo
+	LEFT JOIN EXEL_ENTES.BI_Ubicacion bi_ubi on hv.codigo_ubicacion = bi_ubi_codigo
+	LEFT JOIN EXEL_ENTES.BI_Tiempo bi_tiempo on hv.codigo_tiempo = bi_tiempo.bi_tiempo_codigo
 GROUP BY bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia, hv.cantidad_ventas
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
-/*
+
 -- 4. Rendimiento de rubros
 CREATE VIEW [EXEL_ENTES].BI_rendimiento_rubros AS
-SELECT
+SELECT TOP 5
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
     ubicacion.bi_ubi_localidad AS localidad,
     rango_etario.bi_rango_etario_desc AS rango_etario,
-    rubroSubrubro.rubro,
+    rubroSubrubro.rubro AS rubro_subrubro,
     SUM(venta.sumatoria_importe) AS total_ventas
 FROM 
     [EXEL_ENTES].[BI_Hecho_Venta] venta
@@ -682,13 +681,9 @@ GROUP BY
     ubicacion.bi_ubi_localidad,
     rango_etario.bi_rango_etario_desc,
     rubroSubrubro.rubro
-ORDER BY 
-    anio, 
-    cuatrimestre,
-    total_ventas DESC
-OFFSET 0 ROWS FETCH NEXT 5 ROWS ONLY;
 GO
 
+/*
 -- 5. Volumen de ventas
 CREATE VIEW [EXEL_ENTES].BI_volumen_ventas AS
 SELECT
@@ -719,9 +714,9 @@ SELECT TOP 3
 	MAX(hv.sumatoria_importe) AS importe_total_cuotas
     --SUM(hv.importe_cuotas) AS importe_total_cuotas
 FROM [EXEL_ENTES].[BI_Hecho_Venta] hv
-	JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hv.codigo_ubicacion = ubicacion.bi_ubi_codigo
-	JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
-	JOIN [EXEL_ENTES].[BI_TipoMedioPago] medio_pago ON hv.codigo_medio_pago = medio_pago.bi_tipoMedioPago_Codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hv.codigo_ubicacion = ubicacion.bi_ubi_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_TipoMedioPago] medio_pago ON hv.codigo_medio_pago = medio_pago.bi_tipoMedioPago_Codigo
 GROUP BY 
     ubicacion.bi_ubi_localidad, 
     tiempo.bi_tiempo_anio, 
@@ -732,41 +727,37 @@ ORDER BY
 GO
 -- select * from [EXEL_ENTES].BI_pago_en_cuotas
 
-/*	
+	
 -- 7. Porcentaje de cumplimiento de envíos en tiempos programados
 CREATE VIEW [EXEL_ENTES].BI_porcentaje_cumplimiento_envios AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_mes AS mes,
     ubicacion.bi_ubi_provincia AS provincia,
-    SUM(envio.envios_cumplidos) * 100.0 / SUM(envio.cantidad_envios) AS porcentaje_cumplimiento
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Envio] envio
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON envio.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] ubicacion ON envio.codigo_ubicacion_cliente = ubicacion.bi_ubi_codigo
+   (SUM(envio.envios_cumplidos) * 100.0 / (SUM(envio.cantidad_envios))) AS porcentaje_cumplimiento
+FROM [EXEL_ENTES].[BI_Hecho_Envio] envio
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON envio.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON envio.codigo_ubicacion_cliente = ubicacion.bi_ubi_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes,
     ubicacion.bi_ubi_provincia;
 GO
+-- select * from [EXEL_ENTES].BI_porcentaje_cumplimiento_envios
 
 
 -- 8. Localidades que pagan mayor costo de envío
 CREATE VIEW [EXEL_ENTES].BI_localidades_mayor_costo_envio AS
 SELECT TOP 5
     ubicacion.bi_ubi_localidad AS localidad,
-    SUM(envio.costo_total_envios) AS costo_total_envios
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Envio] envio
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] ubicacion ON envio.codigo_ubicacion_cliente = ubicacion.bi_ubi_codigo
-GROUP BY 
-    ubicacion.bi_ubi_localidad
-ORDER BY 
-    costo_total_envios DESC;
+    MAX(envio.costo_total_envios) AS costo_total_envios
+FROM [EXEL_ENTES].[BI_Hecho_Envio] envio
+	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON envio.codigo_ubicacion_cliente = ubicacion.bi_ubi_codigo
+GROUP BY ubicacion.bi_ubi_localidad
+ORDER BY MAX(envio.costo_total_envios) DESC;
 GO
+
+-- select * from [EXEL_ENTES].BI_localidades_mayor_costo_envio
 
 
 -- 9. Porcentaje de facturación por concepto
@@ -774,18 +765,17 @@ CREATE VIEW [EXEL_ENTES].BI_porcentaje_facturacion_mensual AS
 SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_mes AS mes,
-    (facturacion.total_facturado * 100.0) / SUM(facturacion.total_facturado) OVER (PARTITION BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes) AS porcentaje_facturacion
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Facturacion] facturacion
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON facturacion.codigo_tiempo = tiempo.bi_tiempo_codigo
+    (SUM(facturacion.total_facturado) * 100.0) / (SELECT SUM(total_facturado) FROM [EXEL_ENTES].[BI_Hecho_Facturacion]) AS porcentaje_facturacion
+FROM [EXEL_ENTES].[BI_Hecho_Facturacion] facturacion
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON facturacion.codigo_tiempo = tiempo.bi_tiempo_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
-    tiempo.bi_tiempo_mes,
-    facturacion.total_facturado;
+    tiempo.bi_tiempo_mes
 GO
+-- select * from [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 
 
+/*
 -- 10. Facturación por provincia
 CREATE VIEW [EXEL_ENTES].BI_facturacion_por_provincia AS
 SELECT
