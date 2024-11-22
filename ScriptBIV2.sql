@@ -378,7 +378,8 @@ GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango
 
 GO
 
-select * from [EXEL_ENTES].[BI_Hecho_Venta]
+-- select * from [EXEL_ENTES].[BI_Hecho_Venta]
+
 /*
 WITH Ventas_Cuatrimestre AS (
     SELECT 
@@ -457,33 +458,7 @@ WHERE
 
 --select * from EXEL_ENTES.BI_Hecho_Venta
 
-
-
-
  ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
-
-/* Carga de Hecho BI_Hecho_Compra 
-INSERT INTO [EXEL_ENTES].[BI_Hecho_Compra] (  -- POSIBLEMENTE IRRELEVANTE HACER ESTE HECHO.
-    codigo_horario,
-    codigo_tiempo,
-    cantidad_articulos,
-    cantidad_compras,
-    monto_total
-)
-SELECT 
-    rango_horario.rango_horario_id,
-    tiempo.bi_tiempo_codigo,
-    SUM(item.cantidad) AS cantidad_articulos,
-    COUNT(DISTINCT c.codigo) AS cantidad_compras,  -- Total de compras
-    SUM(c.monto_total) AS monto_total
-FROM [EXEL_ENTES].Compra c
-JOIN [EXEL_ENTES].ItemCompra item ON c.codigo = item.codigo_compra
-JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON YEAR(c.fecha) = tiempo.bi_tiempo_anio AND MONTH(c.fecha) = tiempo.bi_tiempo_mes
-JOIN [EXEL_ENTES].[BI_RangoHorario] rango_horario ON [EXEL_ENTES].getHorario(c.fecha) = rango_horario.rango
-GROUP BY 
-    rango_horario.rango_horario_id,
-    tiempo.bi_tiempo_codigo;
-GO */
 
 
 /* Carga de Hecho BI_Hecho_Envio */
@@ -592,6 +567,8 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_venta_promedio_mensual')
 DROP VIEW [EXEL_ENTES].BI_venta_promedio_mensual
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_rendimiento_rubros')
 DROP VIEW [EXEL_ENTES].BI_rendimiento_rubros
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_volumen_ventas')
+DROP VIEW [EXEL_ENTES].BI_volumen_ventas 
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_pago_en_cuotas')
 DROP VIEW [EXEL_ENTES].BI_pago_en_cuotas
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_porcentaje_cumplimiento_envios')
@@ -600,6 +577,8 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_localidades_mayor_costo_e
 DROP VIEW [EXEL_ENTES].BI_localidades_mayor_costo_envio
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_porcentaje_facturacion_mensual')
 DROP VIEW [EXEL_ENTES].BI_porcentaje_facturacion_mensual
+IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_facturacion_por_provincia')
+DROP VIEW [EXEL_ENTES].BI_facturacion_por_provincia
 GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
 
 /* ------- CREACIÓN DE VISTAS ------- */
@@ -665,16 +644,11 @@ SELECT TOP 5
     rango_etario.bi_rango_etario_desc AS rango_etario,
     rubroSubrubro.rubro AS rubro_subrubro,
     SUM(venta.sumatoria_importe) AS total_ventas
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Venta] venta
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON venta.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
-JOIN 
-    [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON venta.codigo_rubrosubrubro = rubroSubrubro.bi_rubro_subrubro_codigo
+FROM [EXEL_ENTES].[BI_Hecho_Venta] venta
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON venta.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON venta.codigo_rubrosubrubro = rubroSubrubro.bi_rubro_subrubro_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
@@ -682,8 +656,8 @@ GROUP BY
     rango_etario.bi_rango_etario_desc,
     rubroSubrubro.rubro
 GO
+-- select * from [EXEL_ENTES].BI_rendimiento_rubros
 
-/*
 -- 5. Volumen de ventas
 CREATE VIEW [EXEL_ENTES].BI_volumen_ventas AS
 SELECT
@@ -691,18 +665,15 @@ SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_mes AS mes,
     SUM(hv.cantidad_ventas) AS volumen_ventas
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Venta] hv
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_RangoHorario] rango_horario ON hv.codigo_rango_horario_venta = rango_horario.rango_horario_id
+FROM [EXEL_ENTES].[BI_Hecho_Venta] hv
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_RangoHorario] rango_horario ON hv.codigo_rango_horario_venta = rango_horario.rango_horario_id
 GROUP BY 
     rango_horario.rango, 
     tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes;
 GO
-*/
+-- select * from [EXEL_ENTES].BI_volumen_ventas
 
 -- 6. Pago en cuotas
 CREATE VIEW [EXEL_ENTES].BI_pago_en_cuotas AS
@@ -775,7 +746,6 @@ GO
 -- select * from [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 
 
-/*
 -- 10. Facturación por provincia
 CREATE VIEW [EXEL_ENTES].BI_facturacion_por_provincia AS
 SELECT
@@ -783,23 +753,22 @@ SELECT
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
     ubicacion.bi_ubi_provincia AS provincia,
     SUM(venta.sumatoria_importe) AS total_facturado
-FROM 
-    [EXEL_ENTES].[BI_Hecho_Venta] venta
-JOIN 
-    [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
-JOIN 
-    [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
+FROM [EXEL_ENTES].[BI_Hecho_Venta] venta
+	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
+	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
     ubicacion.bi_ubi_provincia
-ORDER BY 
-    tiempo.bi_tiempo_anio,
+ORDER BY
+	tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
-    ubicacion.bi_ubi_provincia;
+    ubicacion.bi_ubi_provincia
 GO
+-- select * from [EXEL_ENTES].BI_facturacion_por_provincia
 
-*/ --cierro vistas todavia no vistas
+
+
 /* ------- FIN DE CREACION DE VISTAS ------- */
 
 
