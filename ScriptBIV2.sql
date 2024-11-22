@@ -626,11 +626,15 @@ SELECT
 	bi_tiempo.bi_tiempo_anio as [Anio],
 	bi_tiempo.bi_tiempo_mes as [Mes],
 	bi_ubi.bi_ubi_provincia as [Provincia],
-	isnull(isnull(sum(hv.sumatoria_importe),0)/hv.cantidad_ventas,0) as [Importe]
+	((sum(hv.sumatoria_importe))/(sum(hv.cantidad_ventas))) as [Importe]
 FROM EXEL_ENTES.BI_Hecho_Venta hv
 	LEFT JOIN EXEL_ENTES.BI_Ubicacion bi_ubi on hv.codigo_ubicacion = bi_ubi_codigo
 	LEFT JOIN EXEL_ENTES.BI_Tiempo bi_tiempo on hv.codigo_tiempo = bi_tiempo.bi_tiempo_codigo
-GROUP BY bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia, hv.cantidad_ventas
+GROUP BY 
+	bi_tiempo.bi_tiempo_anio, 
+	bi_tiempo.bi_tiempo_mes,
+	bi_ubi.bi_ubi_provincia 
+order by bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
@@ -671,6 +675,10 @@ FROM [EXEL_ENTES].[BI_Hecho_Venta] hv
 GROUP BY 
     rango_horario.rango, 
     tiempo.bi_tiempo_anio, 
+    tiempo.bi_tiempo_mes
+order by
+   rango_horario.rango, 
+    tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes;
 GO
 -- select * from [EXEL_ENTES].BI_volumen_ventas
@@ -710,6 +718,10 @@ FROM [EXEL_ENTES].[BI_Hecho_Envio] envio
 	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON envio.codigo_tiempo = tiempo.bi_tiempo_codigo
 	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON envio.codigo_ubicacion_cliente = ubicacion.bi_ubi_codigo
 GROUP BY 
+tiempo.bi_tiempo_anio,
+    tiempo.bi_tiempo_mes,
+    ubicacion.bi_ubi_provincia
+order by
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes,
     ubicacion.bi_ubi_provincia;
@@ -741,6 +753,9 @@ FROM [EXEL_ENTES].[BI_Hecho_Facturacion] facturacion
 	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON facturacion.codigo_tiempo = tiempo.bi_tiempo_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
+    tiempo.bi_tiempo_mes
+order by
+	tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes
 GO
 -- select * from [EXEL_ENTES].BI_porcentaje_facturacion_mensual
