@@ -363,11 +363,9 @@ JOIN [EXEL_ENTES].Usuario usuario ON usuario.Codigo_Usuario = cliente.Codigo_Usu
 JOIN [EXEL_ENTES].Pago pago ON pago.Codigo_Numero_Venta = venta.Numero_Venta
 JOIN [EXEL_ENTES].MedioDePago medioDePago on medioDePago.Codigo_MedioPago = pago.Codigo_MedioPago
 JOIN [EXEL_ENTES].TipoMedioDePago tipoMedioPago on tipoMedioPago.Tipo_Medio_Pago_Codigo = medioDePago.Tipo_Medio_Pago_Codigo
-JOIN [EXEL_ENTES].Detalle_Venta detalle_venta ON detalle_venta.Numero_Venta = venta.Numero_Venta
-JOIN [EXEL_ENTES].Publicacion publicacion ON publicacion.Codigo_Publicacion = detalle_venta.Codigo_Publicacion
+JOIN [EXEL_ENTES].Publicacion publicacion ON publicacion.Codigo_Publicacion = venta.Codigo_Publicacion
 JOIN [EXEL_ENTES].Producto producto ON producto.Codigo_Publicacion = publicacion.Codigo_Publicacion
 JOIN [EXEL_ENTES].Subrubro subrubro ON subrubro.Codigo_Subrubro = producto.Codigo_Subrubro
--- LEFT JOIN EXEL_ENTES.Rubro rubro ON rubro.Codigo_Rubro = subrubro.Codigo_Subrubro
 LEFT JOIN [EXEL_ENTES].BI_RubroSubrubro rubroSubrubro ON subrubro.Codigo_Subrubro = rubroSubrubro.subrubro
 LEFT JOIN [EXEL_ENTES].BI_RangoHorario rango_horario ON rango_horario.rango = EXEL_ENTES.getHorario(venta.Fecha_Venta)
 LEFT JOIN [EXEL_ENTES].BI_Ubicacion ubicacion ON ubicacion.bi_ubi_localidad = usuario.Domicilio_Localidad AND ubicacion.bi_ubi_provincia = usuario.Domicilio_Provincia
@@ -378,87 +376,7 @@ GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango
 
 GO
 
--- select * from [EXEL_ENTES].[BI_Hecho_Venta]
-
-/*
-WITH Ventas_Cuatrimestre AS (
-    SELECT 
-        ubicacion.bi_ubi_codigo,
-        ubicacion.bi_ubi_localidad,
-        ubicacion.bi_ubi_provincia,
-        tiempo.bi_tiempo_anio,
-        tiempo.bi_tiempo_cuatri,
-        rango_etario.bi_rango_etario_desc,
-        rubroSubrubro.rubro,
-        SUM(hecho.cantidad_ventas) AS cantidad_ventas,
-        ROW_NUMBER() OVER(PARTITION BY ubicacion.bi_ubi_localidad, tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, rango_etario.bi_rango_etario_desc ORDER BY SUM(hecho.cantidad_ventas) DESC) AS rn
-    FROM 
-        [EXEL_ENTES].[BI_Hecho_Venta] hecho
-    JOIN 
-        [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hecho.codigo_ubicacion = ubicacion.bi_ubi_codigo
-    JOIN 
-        [EXEL_ENTES].[BI_Tiempo] tiempo ON hecho.codigo_tiempo = tiempo.bi_tiempo_codigo
-    JOIN 
-        [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON hecho.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
-    JOIN 
-        [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON hecho.codigo_rubrosubrubro = rubroSubrubro.bi_rubro_subrubro_codigo
-	where rubroSubrubro.rubro is not null
-    GROUP BY 
-        ubicacion.bi_ubi_codigo,
-        ubicacion.bi_ubi_localidad,
-        ubicacion.bi_ubi_provincia,
-        tiempo.bi_tiempo_anio,
-        tiempo.bi_tiempo_cuatri,
-        rango_etario.bi_rango_etario_desc,
-        rubroSubrubro.rubro
-)
-SELECT 
-    bi_ubi_localidad,
-    bi_ubi_provincia,
-    bi_tiempo_anio,
-    bi_tiempo_cuatri,
-    bi_rango_etario_desc,
-    rubro,
-    cantidad_ventas
-FROM 
-    Ventas_Cuatrimestre
-WHERE 
-    rn <= 5;
-
-
-
-WITH Ventas_Cuatrimestre AS (
-    SELECT 
-        tiempo.bi_tiempo_anio,
-        tiempo.bi_tiempo_cuatri,
-        hecho.codigo_rubrosubrubro,
-        SUM(hecho.cantidad_ventas) AS total_cantidad_ventas,
-        ROW_NUMBER() OVER(PARTITION BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri ORDER BY SUM(hecho.cantidad_ventas) DESC) AS rn
-    FROM 
-        [EXEL_ENTES].[BI_Hecho_Venta] hecho
-    JOIN 
-        [EXEL_ENTES].[BI_Tiempo] tiempo ON hecho.codigo_tiempo = tiempo.bi_tiempo_codigo
-    GROUP BY 
-        tiempo.bi_tiempo_anio,
-        tiempo.bi_tiempo_cuatri,
-        hecho.codigo_rubrosubrubro
-)
-SELECT 
-    bi_tiempo_anio,
-    bi_tiempo_cuatri,
-    codigo_rubrosubrubro,
-    total_cantidad_ventas
-FROM 
-    Ventas_Cuatrimestre
-WHERE 
-    rn <= 5;
-*/
-
-
-
---select * from EXEL_ENTES.BI_Hecho_Venta
-
- ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
+------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
 
 /* Carga de Hecho BI_Hecho_Envio */
@@ -623,10 +541,10 @@ GO
 -- 3. Venta promedio mensual -- CAMBIADA POR HECHO VENTA
 CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
 SELECT
-	bi_tiempo.bi_tiempo_anio as [Anio],
-	bi_tiempo.bi_tiempo_mes as [Mes],
-	bi_ubi.bi_ubi_provincia as [Provincia],
-	((sum(hv.sumatoria_importe))/(sum(hv.cantidad_ventas))) as [Importe]
+	bi_tiempo.bi_tiempo_anio as anio,
+	bi_tiempo.bi_tiempo_mes as mes,
+	bi_ubi.bi_ubi_provincia as provincia,
+	((sum(hv.sumatoria_importe))/(sum(hv.cantidad_ventas))) as importe
 FROM EXEL_ENTES.BI_Hecho_Venta hv
 	LEFT JOIN EXEL_ENTES.BI_Ubicacion bi_ubi on hv.codigo_ubicacion = bi_ubi_codigo
 	LEFT JOIN EXEL_ENTES.BI_Tiempo bi_tiempo on hv.codigo_tiempo = bi_tiempo.bi_tiempo_codigo
@@ -634,32 +552,53 @@ GROUP BY
 	bi_tiempo.bi_tiempo_anio, 
 	bi_tiempo.bi_tiempo_mes,
 	bi_ubi.bi_ubi_provincia 
-order by bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia
+--order by bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
 
 -- 4. Rendimiento de rubros
 CREATE VIEW [EXEL_ENTES].BI_rendimiento_rubros AS
-SELECT TOP 5
+SELECT
     tiempo.bi_tiempo_anio AS anio,
     tiempo.bi_tiempo_cuatri AS cuatrimestre,
     ubicacion.bi_ubi_localidad AS localidad,
     rango_etario.bi_rango_etario_desc AS rango_etario,
-    rubroSubrubro.rubro AS rubro_subrubro,
+    rubro.rubro AS rubro_subrubro,
     SUM(venta.sumatoria_importe) AS total_ventas
-FROM [EXEL_ENTES].[BI_Hecho_Venta] venta
-	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
-	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
-	LEFT JOIN [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON venta.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
-	LEFT JOIN [EXEL_ENTES].[BI_RubroSubrubro] rubroSubrubro ON venta.codigo_rubrosubrubro = rubroSubrubro.bi_rubro_subrubro_codigo
+FROM 
+    [EXEL_ENTES].[BI_Hecho_Venta] venta
+    LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON venta.codigo_tiempo = tiempo.bi_tiempo_codigo
+    LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON venta.codigo_ubicacion = ubicacion.bi_ubi_codigo
+    LEFT JOIN [EXEL_ENTES].[BI_Rango_Etario] rango_etario ON venta.codigo_rango_etario_cliente = rango_etario.bi_rango_etario_codigo
+    LEFT JOIN [EXEL_ENTES].[BI_RubroSubrubro] rubro ON venta.codigo_rubrosubrubro = rubro.bi_rubro_subrubro_codigo
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
     ubicacion.bi_ubi_localidad,
     rango_etario.bi_rango_etario_desc,
-    rubroSubrubro.rubro
+    rubro.rubro
+HAVING 
+    SUM(venta.sumatoria_importe) IN (
+        SELECT TOP 5 
+            SUM(v1.sumatoria_importe)
+        FROM 
+            [EXEL_ENTES].[BI_Hecho_Venta] v1
+            LEFT JOIN [EXEL_ENTES].[BI_Tiempo] t1 ON v1.codigo_tiempo = t1.bi_tiempo_codigo
+            LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] u1 ON v1.codigo_ubicacion = u1.bi_ubi_codigo
+            LEFT JOIN [EXEL_ENTES].[BI_Rango_Etario] r1 ON v1.codigo_rango_etario_cliente = r1.bi_rango_etario_codigo
+            LEFT JOIN [EXEL_ENTES].[BI_RubroSubrubro] ru1 ON v1.codigo_rubrosubrubro = ru1.bi_rubro_subrubro_codigo
+        WHERE 
+            t1.bi_tiempo_anio = tiempo.bi_tiempo_anio
+            AND t1.bi_tiempo_cuatri = tiempo.bi_tiempo_cuatri
+            AND u1.bi_ubi_localidad = ubicacion.bi_ubi_localidad
+            AND r1.bi_rango_etario_desc = rango_etario.bi_rango_etario_desc
+        GROUP BY ru1.rubro
+        ORDER BY SUM(v1.sumatoria_importe) DESC
+    )
+--ORDER BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, ubicacion.bi_ubi_localidad, rango_etario.bi_rango_etario_desc, total_ventas DESC;
 GO
+
 -- select * from [EXEL_ENTES].BI_rendimiento_rubros
 
 -- 5. Volumen de ventas
@@ -676,10 +615,7 @@ GROUP BY
     rango_horario.rango, 
     tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes
-order by
-   rango_horario.rango, 
-    tiempo.bi_tiempo_anio, 
-    tiempo.bi_tiempo_mes;
+--order by rango_horario.rango, tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes;
 GO
 -- select * from [EXEL_ENTES].BI_volumen_ventas
 
@@ -701,8 +637,7 @@ GROUP BY
     tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes, 
     medio_pago.descripcion_tipo_medio_pago
-ORDER BY 
-    importe_total_cuotas DESC;
+ORDER BY importe_total_cuotas DESC;
 GO
 -- select * from [EXEL_ENTES].BI_pago_en_cuotas
 
@@ -721,10 +656,7 @@ GROUP BY
 tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes,
     ubicacion.bi_ubi_provincia
-order by
-    tiempo.bi_tiempo_anio,
-    tiempo.bi_tiempo_mes,
-    ubicacion.bi_ubi_provincia;
+--order by tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes, ubicacion.bi_ubi_provincia;
 GO
 -- select * from [EXEL_ENTES].BI_porcentaje_cumplimiento_envios
 
@@ -754,9 +686,7 @@ FROM [EXEL_ENTES].[BI_Hecho_Facturacion] facturacion
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes
-order by
-	tiempo.bi_tiempo_anio,
-    tiempo.bi_tiempo_mes
+--order by tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes
 GO
 -- select * from [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 
@@ -775,10 +705,7 @@ GROUP BY
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
     ubicacion.bi_ubi_provincia
-ORDER BY
-	tiempo.bi_tiempo_anio,
-    tiempo.bi_tiempo_cuatri,
-    ubicacion.bi_ubi_provincia
+-- ORDER BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, ubicacion.bi_ubi_provincia
 GO
 -- select * from [EXEL_ENTES].BI_facturacion_por_provincia
 

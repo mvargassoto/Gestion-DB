@@ -165,7 +165,7 @@ CREATE TABLE [EXEL_ENTES].[Producto] (
 	CONSTRAINT [PK_Producto] PRIMARY KEY (Codigo_Producto, Codigo_Publicacion, Codigo_Subrubro),
     CONSTRAINT [FK_Producto_Codigo_Publicacion] FOREIGN KEY (Codigo_Publicacion) REFERENCES [EXEL_ENTES].[Publicacion](Codigo_Publicacion),
 	CONSTRAINT [FK_Producto_Codigo_Subrubro] FOREIGN KEY (Codigo_Subrubro) REFERENCES [EXEL_ENTES].[Subrubro](Codigo_Subrubro),
-    Codigo_Subrubro INT,
+    Codigo_Subrubro INT NOT NULL,
 	CONSTRAINT [FK_Publicacion_Codigo_Marca] FOREIGN KEY (Codigo_Marca) REFERENCES [EXEL_ENTES].[Marca](Codigo_Marca),
     Codigo_Marca INT,
     Descripcion NVARCHAR(50),
@@ -261,6 +261,7 @@ CREATE TABLE [EXEL_ENTES].[Detalle_Pago] (
 );
 
 CREATE TABLE [EXEL_ENTES].[Detalle_Venta] (
+    CONSTRAINT [PK_Detalle_Venta] PRIMARY KEY (Numero_Venta),
     CONSTRAINT [FK_Detalle_Venta_Numero_Venta] FOREIGN KEY (Numero_Venta) REFERENCES [EXEL_ENTES].[Venta](Numero_Venta),
     CONSTRAINT [FK_Detalle_Venta_Codigo_Publicacion] FOREIGN KEY (Codigo_Publicacion) REFERENCES [EXEL_ENTES].[Publicacion](Codigo_Publicacion),
     Numero_Venta DECIMAL(18, 0) NOT NULL,
@@ -448,6 +449,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Rubro] (Descripcion)
     SELECT DISTINCT PRODUCTO_RUBRO_DESCRIPCION
     FROM gd_esquema.Maestra
+    WHERE PRODUCTO_RUBRO_DESCRIPCION IS NOT NULL
 END
 GO
 
@@ -476,6 +478,7 @@ BEGIN
     INSERT INTO [EXEL_ENTES].[Marca] (Descripcion) -- , Descripcion)   No existe una descripcion como tal TENEMOS QUE REVISAR EL DER
     SELECT DISTINCT PRODUCTO_MARCA -- PRODUCTO_MARCA_DESCRIPCION
     FROM gd_esquema.Maestra
+    WHERE PRODUCTO_MARCA IS NOT NULL
 END
 GO
 
@@ -503,10 +506,12 @@ BEGIN
     SELECT DISTINCT PRODUCTO_CODIGO, PUBLICACION_CODIGO, sub.Codigo_Subrubro, PRODUCTO_DESCRIPCION, marca.Codigo_Marca, PRODUCTO_MOD_CODIGO
     FROM gd_esquema.Maestra maes
 	join EXEL_ENTES.Subrubro sub on
-		maes.PRODUCTO_SUB_RUBRO = sub.Descripcion
+        maes.producto_sub_rubro = sub.descripcion
 	join EXEL_ENTES.Marca marca on
 		maes.PRODUCTO_MARCA = marca.Descripcion
     WHERE maes.PRODUCTO_CODIGO IS NOT NULL
+    and maes.producto_rubro_descripcion = (select r.descripcion from EXEL_ENTES.rubro r
+                                            where r.codigo_rubro = sub.Codigo_Rubro)
 END
 GO
 
