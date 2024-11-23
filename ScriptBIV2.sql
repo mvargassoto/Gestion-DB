@@ -196,20 +196,6 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Venta] (
     CONSTRAINT [FK_BI_Hecho_Venta_BI_RubroSubrubro] FOREIGN KEY (codigo_rubrosubrubro) REFERENCES [EXEL_ENTES].[BI_RubroSubrubro](bi_rubro_subrubro_codigo)
 );
 
-/* 
-NO SE UTILIZA PARA NINGUNA VISTA
-CREATE TABLE [EXEL_ENTES].[BI_Hecho_Compra] (
-    codigo_tiempo INT NOT NULL,
-    codigo_horario INT NOT NULL,
-    cantidad_articulos INT NOT NULL,
-    cantidad_compras INT NOT NULL,
-    monto_total DECIMAL(18, 2) NOT NULL,
-    -- descuento_total DECIMAL(18, 2),
-    CONSTRAINT [PK_BI_Hecho_Compra] PRIMARY KEY (codigo_horario, codigo_tiempo),
-    CONSTRAINT [FK_BI_Hecho_Compra_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
-    CONSTRAINT [FK_BI_Hecho_Compra_BI_Horario] FOREIGN KEY (codigo_horario) REFERENCES [EXEL_ENTES].[BI_RangoHorario](rango_horario_id)
-); */
-
 -- NECESARIA PARA LA VISTA 1 Y 2
 CREATE TABLE [EXEL_ENTES].[BI_Hecho_Publicacion] (
     codigo_tiempo INT NOT NULL,
@@ -229,7 +215,6 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Stock] (
     CONSTRAINT [FK_BI_Hecho_Stock_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
     CONSTRAINT [FK_BI_Hecho_Stock_BI_Marca] FOREIGN KEY (codigo_marca) REFERENCES [EXEL_ENTES].[BI_Marca](bi_marca_codigo)
 );
-
 
 CREATE TABLE [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo INT NOT NULL,
@@ -251,7 +236,6 @@ CREATE TABLE [EXEL_ENTES].[BI_Hecho_Facturacion] (
     CONSTRAINT [FK_BI_Hecho_Facturacion_BI_Tiempo] FOREIGN KEY (codigo_tiempo) REFERENCES [EXEL_ENTES].[BI_Tiempo](bi_tiempo_codigo),
 	CONSTRAINT [FK_BI_Hecho_Facturacion_BI_Ubicacion] FOREIGN KEY (codigo_ubicacion) REFERENCES [EXEL_ENTES].[BI_Ubicacion](bi_ubi_codigo),
 );
-
 
 /* ------- FIN DE CREACION DE HECHOS ------- */
 
@@ -279,8 +263,6 @@ FROM (
 	FROM [EXEL_ENTES].Pago p
 ) as Fechas
 order by year(Fechas.fecha) asc, [EXEL_ENTES].getCuatrimestre(Fechas.fecha) asc, month(Fechas.fecha) asc
-
--- Carga de dimensión Ubicación	  NOTA: va a ser necesario hacer un union de las ubicaciones que existen para almacenes con las de cliente
 
 INSERT INTO [EXEL_ENTES].[BI_Ubicacion] (bi_ubi_provincia, bi_ubi_localidad)
 SELECT DISTINCT 
@@ -329,12 +311,13 @@ INSERT INTO [EXEL_ENTES].[BI_Marca] (bi_marca_codigo,descripcion)
 SELECT DISTINCT Marca.Codigo_Marca, Marca.Descripcion
 FROM [EXEL_ENTES].Marca;
 
-
 /* ------- FIN DE CARGA DE LAS DIMENSIONES ------- */
+
+
 
 /* ------- INICIO DE CARGA DE LOS HECHOS ------- */
 
- ------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
+------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Venta] (
     codigo_ubicacion,
@@ -375,11 +358,11 @@ LEFT JOIN [EXEL_ENTES].BI_TipoMedioPago bi_tipoMedioPago on bi_tipoMedioPago.bi_
 GROUP BY ubicacion.bi_ubi_codigo, tiempo.bi_tiempo_codigo, rango_etario.bi_rango_etario_codigo, rubroSubrubro.bi_rubro_subrubro_codigo, rango_horario.rango_horario_id, bi_tipoMedioPago.bi_tipoMedioPago_Codigo
 
 GO
-
 ------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Venta ------- 
 
 
-/* Carga de Hecho BI_Hecho_Envio */
+------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Envio ------- 
+
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Envio] (
     codigo_tiempo,
     codigo_ubicacion_cliente,
@@ -402,9 +385,11 @@ GROUP BY
     tiempo.bi_tiempo_codigo,
     ubicacion.bi_ubi_codigo;
 GO
+------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Envio ------- 
 
 
--- HECHO_PUBLICACION SE RELACIONA CON VISTA 1 Y 2
+------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Publicacion ------- 
+
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Publicacion] (
     codigo_tiempo,
     codigo_rubro_subrubro,
@@ -427,8 +412,11 @@ GROUP BY
     rubroSubrubro.bi_rubro_subrubro_codigo,
 	bi_tiempo_cuatri;
 GO
+------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Publicacion ------- 
 
--- HECHO STOCK RELACIONADO CON VISTA 2
+
+------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Stock ------- 
+
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Stock] (
     codigo_tiempo,
     codigo_marca,
@@ -452,9 +440,11 @@ GROUP BY
     tiempo.bi_tiempo_codigo,
     marca.bi_marca_codigo;
 GO
+------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Stock ------- 
 
 
--- HECHO FACT PARA VISTA 9
+------- INICIO DE CARGA DE HECHOS PARA BI_Hecho_Facturacion ------- 
+
 INSERT INTO [EXEL_ENTES].[BI_Hecho_Facturacion] (
     codigo_tiempo,
 	codigo_ubicacion,
@@ -472,10 +462,12 @@ GROUP BY
     tiempo.bi_tiempo_codigo,
 	ubicacion.bi_ubi_codigo
 GO
-
+------- FIN DE CARGA DE HECHOS PARA BI_Hecho_Facturacion ------- 
 
 /* ------- FIN DE CARGA DE LOS HECHOS ------- */
 
+
+/* ------- INICIO CREACION DE VISTAS ------- */
 
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_tiempo_promedio_publicaciones')
 DROP VIEW [EXEL_ENTES].BI_tiempo_promedio_publicaciones
@@ -497,7 +489,7 @@ IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_porcentaje_facturacion_me
 DROP VIEW [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 IF EXISTS (SELECT name FROM sys.views WHERE name = 'BI_facturacion_por_provincia')
 DROP VIEW [EXEL_ENTES].BI_facturacion_por_provincia
-GO -- puse el go xq sino se quejaba (no se si esta bien) SOFI
+GO 
 
 /* ------- CREACIÓN DE VISTAS ------- */
 
@@ -538,7 +530,7 @@ GO
 -- select * from [EXEL_ENTES].BI_promedio_stock_inicial
 
 
--- 3. Venta promedio mensual -- CAMBIADA POR HECHO VENTA
+-- 3. Venta promedio mensual 
 CREATE VIEW [EXEL_ENTES].BI_venta_promedio_mensual AS
 SELECT
 	bi_tiempo.bi_tiempo_anio as anio,
@@ -552,7 +544,6 @@ GROUP BY
 	bi_tiempo.bi_tiempo_anio, 
 	bi_tiempo.bi_tiempo_mes,
 	bi_ubi.bi_ubi_provincia 
---order by bi_tiempo.bi_tiempo_anio, bi_tiempo.bi_tiempo_mes ,bi_ubi.bi_ubi_provincia
 GO
 -- select * from [EXEL_ENTES].BI_venta_promedio_mensual
 
@@ -596,12 +587,11 @@ HAVING
         GROUP BY ru1.rubro
         ORDER BY SUM(v1.sumatoria_importe) DESC
     )
---ORDER BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, ubicacion.bi_ubi_localidad, rango_etario.bi_rango_etario_desc, total_ventas DESC;
 GO
 
 -- select * from [EXEL_ENTES].BI_rendimiento_rubros
 
--- 5. Volumen de ventas
+-- 5. Volumen de ventas   NOTA: si bien en esta BD no es posible usarla la implementacion seria la elegida
 CREATE VIEW [EXEL_ENTES].BI_volumen_ventas AS
 SELECT
     rango_horario.rango AS rango_horario,
@@ -615,7 +605,6 @@ GROUP BY
     rango_horario.rango, 
     tiempo.bi_tiempo_anio, 
     tiempo.bi_tiempo_mes
---order by rango_horario.rango, tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes;
 GO
 -- select * from [EXEL_ENTES].BI_volumen_ventas
 
@@ -627,7 +616,6 @@ SELECT TOP 3
     tiempo.bi_tiempo_mes AS mes,
     medio_pago.descripcion_tipo_medio_pago AS medio_pago,
 	MAX(hv.sumatoria_importe) AS importe_total_cuotas
-    --SUM(hv.importe_cuotas) AS importe_total_cuotas
 FROM [EXEL_ENTES].[BI_Hecho_Venta] hv
 	LEFT JOIN [EXEL_ENTES].[BI_Ubicacion] ubicacion ON hv.codigo_ubicacion = ubicacion.bi_ubi_codigo
 	LEFT JOIN [EXEL_ENTES].[BI_Tiempo] tiempo ON hv.codigo_tiempo = tiempo.bi_tiempo_codigo
@@ -640,7 +628,6 @@ GROUP BY
 ORDER BY importe_total_cuotas DESC;
 GO
 -- select * from [EXEL_ENTES].BI_pago_en_cuotas
-
 	
 -- 7. Porcentaje de cumplimiento de envíos en tiempos programados
 CREATE VIEW [EXEL_ENTES].BI_porcentaje_cumplimiento_envios AS
@@ -656,7 +643,6 @@ GROUP BY
 tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes,
     ubicacion.bi_ubi_provincia
---order by tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes, ubicacion.bi_ubi_provincia;
 GO
 -- select * from [EXEL_ENTES].BI_porcentaje_cumplimiento_envios
 
@@ -686,7 +672,6 @@ FROM [EXEL_ENTES].[BI_Hecho_Facturacion] facturacion
 GROUP BY 
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_mes
---order by tiempo.bi_tiempo_anio, tiempo.bi_tiempo_mes
 GO
 -- select * from [EXEL_ENTES].BI_porcentaje_facturacion_mensual
 
@@ -705,14 +690,8 @@ GROUP BY
     tiempo.bi_tiempo_anio,
     tiempo.bi_tiempo_cuatri,
     ubicacion.bi_ubi_provincia
--- ORDER BY tiempo.bi_tiempo_anio, tiempo.bi_tiempo_cuatri, ubicacion.bi_ubi_provincia
 GO
 -- select * from [EXEL_ENTES].BI_facturacion_por_provincia
 
-
-
 /* ------- FIN DE CREACION DE VISTAS ------- */
 
-
-
--- hay q dropear las vistas
