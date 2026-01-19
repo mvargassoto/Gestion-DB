@@ -1,15 +1,28 @@
-# Sobre el proyecto
-Mediante este trabajo práctico se intenta simular la implementación de un nuevo
-sistema. El mismo consiste en una plataforma de marketplace que permite conectar
-vendedores y clientes a través de publicaciones, gestionar las ventas, los pagos y los
-envíos que se concretan a través de la misma.
-La implementación de dicho sistema, requiere previamente realizar la migración de los
-datos que se tenían registrados hasta el momento. Para ello es necesario que se
-reformule el diseño de la base de datos y los procesos, de manera tal que cumplan con
-los nuevos requerimientos.
-Además, se solicita la implementación de un segundo modelo, con sus correspondientes
-procedimientos y vistas, que pueda ser utilizado para la obtención de indicadores de
-gestión, análisis de escenarios y proyección para la toma de decisiones.
+# Gestión de Datos
+Este trabajo práctico, denominado **Marketplace**, para la materia Gestión de Datos (UTN.BA), consiste en el diseño, migración y análisis de una plataforma que conecta vendedores y clientes. El objetivo central es transformar una base de datos desnormalizada en un sistema transaccional eficiente y, posteriormente, en un modelo de inteligencia de negocios (BI).
+
+### Arquitectura y Alcance del Proyecto
+El desarrollo se divide en dos grandes etapas técnicas que deben ejecutarse exclusivamente mediante T-SQL en SQL Server 2019:
+
+Modelo Transaccional (Relacional):
+ - **Normalización**: Se debe analizar una "tabla maestra" única y desorganizada para diseñar un nuevo modelo que cumpla con las formas normales.
+ - **Estructura**: Incluye la creación de tablas, claves primarias/foráneas, constraints, triggers e índices para optimizar el acceso.
+ - **Migración**: Implementación de Stored Procedures para trasladar los datos originales al nuevo esquema sin inventar información.
+
+
+Modelo de Inteligencia de Negocios (BI):
+ - **Modelo Dimensional**: Creación de un esquema (estrella o copo de nieve) con dimensiones como Tiempo, Ubicación, Rango Etario y Rubros.
+ - **Indicadores de Gestión**: Desarrollo de 10 vistas específicas que resuelven consultas complejas, como el promedio de tiempo de publicaciones, rendimiento de rubros y porcentaje de cumplimiento de envíos.
+
+   
+Funcionalidades del Sistema
+El sistema debe gestionar el ciclo completo de un Marketplace, abordando los siguientes módulos:
+ - **Publicaciones**: Registro de productos, stock, costos fijos y porcentajes por venta.
+ - **Ventas**: Gestión de transacciones entre clientes y vendedores.
+ - **Envíos**: Seguimiento de domicilios, costos, tipos de envío y fechas de entrega.
+ - **Pagos**: Registro de medios de pago y detalles de cuotas para tarjetas.
+ - **Facturación**: Emisión de facturas a vendedores por costos de publicación e importes de venta.
+
 
 # Programa de la materia "Gestión de Datos"
 ### Programa Sintético
